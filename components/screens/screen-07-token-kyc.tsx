@@ -260,7 +260,7 @@ export function Screen07TokenKyc() {
           border: 1px solid rgba(12, 31, 23, 0.12);
           background: white;
           padding: 0.65rem 0.9rem;
-          font-size: 0.9rem;
+          font-size: 16px;
           color: #0c1f17;
         }
         .field:focus {

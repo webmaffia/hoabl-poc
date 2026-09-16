@@ -33,3 +33,14 @@ body {
 .text-balance {
   text-wrap: balance;
 }
+
+/* iOS Safari auto-zooms the whole page on focus into any text input whose
+   computed font-size is under 16px — this was happening on every form in
+   the app (KYC, identity capture, chat). Forcing 16px here (form-field text
+   is still visually fine at this size) stops the zoom without disabling
+   pinch-zoom for accessibility. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}

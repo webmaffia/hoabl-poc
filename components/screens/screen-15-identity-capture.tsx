@@ -132,7 +132,7 @@ export function Screen15IdentityCapture() {
                   >
                     <span className="text-sm text-forest-900/50">+91</span>
                     <input
-                      className="min-w-0 flex-1 bg-transparent text-sm text-forest-900 outline-none"
+                      className="min-w-0 flex-1 bg-transparent text-base text-forest-900 outline-none"
                       maxLength={10}
                       value={mobile}
                       onChange={(e) => {
@@ -239,7 +239,7 @@ export function Screen15IdentityCapture() {
           border: 1px solid rgba(12, 31, 23, 0.12);
           background: white;
           padding: 0.65rem 0.9rem;
-          font-size: 0.9rem;
+          font-size: 16px;
           color: #0c1f17;
         }
         .field:focus {

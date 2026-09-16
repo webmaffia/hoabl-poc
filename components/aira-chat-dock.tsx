@@ -99,7 +99,7 @@ export function AiraChatDock() {
           }}
           placeholder="Type a message…"
           style={{ colorScheme: "dark" }}
-          className="min-w-0 flex-1 rounded-full bg-forest-800 px-4 py-2.5 text-sm text-ivory-100 outline-none placeholder:text-ivory-100/40 focus:bg-forest-700"
+          className="min-w-0 flex-1 rounded-full bg-forest-800 px-4 py-2.5 text-base text-ivory-100 outline-none placeholder:text-ivory-100/40 focus:bg-forest-700"
         />
         <button
           type="button"
