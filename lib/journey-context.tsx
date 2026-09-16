@@ -17,6 +17,9 @@ export const SCREEN_ORDER = [
   "welcome",
   "buyer-profile",
   "profile-summary",
+  // Right after the profile is built — a real, browsable list of HoABL
+  // projects, with the one matched to the buyer's profile highlighted.
+  "select-project",
   "project-match",
   "project-walkthrough",
   "land-layout",

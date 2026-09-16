@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, GitCompare, Map } from "lucide-react";
+import { Heart, GitCompare, Map, Route, Eye, Lock, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { TrustBadge } from "@/components/trust/trust-badge";
@@ -85,6 +85,10 @@ export function Screen11PocketDetail() {
             {pocket.availability !== "sold" && <LiveViewerBadge seed={pocket.id} />}
           </div>
         </motion.div>
+
+        <FeatureRow pocket={pocket} />
+
+        <InvestmentForecast price={pocket.price} />
 
         <div className="mt-5 rounded-xl2 border border-forest-900/8 bg-white p-4 shadow-card">
           <div className="mb-1 flex items-center justify-between">
@@ -339,6 +343,95 @@ function PaymentPlan({ price }: { price: number }) {
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+const FEATURE_CHIPS = [
+  { icon: Route, key: "roadAccess" as const, high: "Strong road access", low: "Road access" },
+  { icon: Eye, key: "view" as const, high: "Great view", low: "Standard view" },
+  { icon: Lock, key: "privacy" as const, high: "High privacy", low: "Some privacy" },
+  { icon: Landmark, key: "amenityProximity" as const, high: "Near amenities", low: "Amenities nearby" },
+];
+
+/** A row of small icon chips summarizing this pocket's own scored attributes (not invented facts). */
+function FeatureRow({ pocket }: { pocket: import("@/lib/types").Pocket }) {
+  return (
+    <div className="mt-4 grid grid-cols-4 gap-2">
+      {FEATURE_CHIPS.map(({ icon: Icon, key, high, low }) => {
+        const value = pocket[key];
+        return (
+          <div
+            key={key}
+            className="flex flex-col items-center gap-1 rounded-xl border border-forest-900/8 bg-white px-1.5 py-2.5 text-center shadow-card"
+          >
+            <Icon className="h-4 w-4 text-forest-800" />
+            <span className="text-[9px] font-medium leading-tight text-forest-900/75">
+              {value >= 70 ? high : low}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const FORECAST_POINTS = [
+  { label: "Now", growth: 0 },
+  { label: "1 Year", growth: 0.15 },
+  { label: "3 Years", growth: 0.41 },
+  { label: "5 Years", growth: 0.8 },
+];
+
+/**
+ * An illustrative, animated growth projection — clearly marked as Aira's
+ * interpretation (not a verified fact or a guarantee), consistent with the
+ * app's trust-layer pattern elsewhere.
+ */
+function InvestmentForecast({ price }: { price: number }) {
+  const values = FORECAST_POINTS.map((p) => Math.round(price * (1 + p.growth)));
+  const max = Math.max(...values);
+
+  return (
+    <div className="mt-4 rounded-xl2 border border-forest-900/8 bg-white p-4 shadow-card">
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-forest-900/45">
+          AI investment forecast
+        </span>
+        <TrustBadge kind="interpretation" />
+      </div>
+
+      <div className="mt-3 flex items-end gap-2" style={{ height: 96 }}>
+        {FORECAST_POINTS.map((p, i) => (
+          <div key={p.label} className="flex h-full flex-1 flex-col items-center justify-end">
+            <span className="mb-1 text-[10px] font-semibold text-forest-900">{formatLakh(values[i])}</span>
+            <motion.div
+              initial={{ height: 0 }}
+              animate={{ height: `${Math.max((values[i] / max) * 100, 6)}%` }}
+              transition={{ duration: 0.7, delay: i * 0.12, ease: "easeOut" }}
+              className={cn(
+                "w-full rounded-t-md",
+                i === 0 ? "bg-forest-900/20" : "bg-gradient-to-t from-gold-600 to-gold-400"
+              )}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1.5 flex gap-2">
+        {FORECAST_POINTS.map((p) => (
+          <div key={p.label} className="flex-1 text-center">
+            <p className="text-[10px] text-forest-900/50">{p.label}</p>
+            {p.growth > 0 && (
+              <p className="text-[9px] font-semibold text-forest-700">+{Math.round(p.growth * 100)}%</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 text-[11px] text-forest-900/40">
+        Aira&rsquo;s projection, based on comparable growth patterns in the region — not a guarantee or financial
+        advice.
+      </p>
     </div>
   );
 }

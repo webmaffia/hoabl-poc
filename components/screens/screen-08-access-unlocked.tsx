@@ -52,9 +52,21 @@ export function Screen08AccessUnlocked() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIdx]);
 
+  const openPayRemaining = () => {
+    setPayingRemaining(true);
+    speak(
+      `Sure — the remaining balance is ${formatINR(remaining)}. You can pay that in full, or apply for EMI through our finance partner.`
+    );
+  };
+
   const payRemaining = () => {
     track("remaining_payment_completed", { method: useEmi ? "emi" : "full", tenure: useEmi ? tenure : undefined });
     setRemainingPaid(true);
+    speak(
+      useEmi
+        ? "Got it — your EMI application is submitted. Your advisor will confirm next steps."
+        : "Payment received. Let's get you connected with your advisor."
+    );
   };
 
   useVoiceCommands(
@@ -63,7 +75,7 @@ export function Screen08AccessUnlocked() {
         ? [{ labels: ["continue", "next", "meet my advisor"], action: next }]
         : [
             { labels: ["talk to advisor", "advisor", "continue", "next"], action: next },
-            { labels: ["pay remaining amount", "pay remaining", "pay now"], action: () => setPayingRemaining(true) },
+            { labels: ["pay remaining amount", "pay remaining", "pay now"], action: openPayRemaining },
           ]
       : []
   );
@@ -137,7 +149,7 @@ export function Screen08AccessUnlocked() {
             <AnimatePresence mode="wait" initial={false}>
               {!payingRemaining ? (
                 <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-6 space-y-2.5">
-                  <Button variant="gold" size="lg" className="w-full" onClick={() => setPayingRemaining(true)}>
+                  <Button variant="gold" size="lg" className="w-full" onClick={openPayRemaining}>
                     Pay remaining amount &rarr;
                   </Button>
                   <Button variant="outline" size="lg" className="w-full" onClick={next}>

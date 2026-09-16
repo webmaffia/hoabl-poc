@@ -25,6 +25,7 @@ import { Screen12ComparePockets } from "@/components/screens/screen-12-compare-p
 import { Screen13DecisionConfidence } from "@/components/screens/screen-13-decision-confidence";
 import { Screen14AdvisorHandoff } from "@/components/screens/screen-14-advisor-handoff";
 import { Screen15IdentityCapture } from "@/components/screens/screen-15-identity-capture";
+import { Screen16SelectProject } from "@/components/screens/screen-16-select-project";
 
 const SCREEN_COMPONENTS = {
   welcome: Screen01Welcome,
@@ -42,6 +43,7 @@ const SCREEN_COMPONENTS = {
   "decision-confidence": Screen13DecisionConfidence,
   "advisor-handoff": Screen14AdvisorHandoff,
   "identity-capture": Screen15IdentityCapture,
+  "select-project": Screen16SelectProject,
 } as const;
 
 function JourneyScreen() {

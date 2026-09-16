@@ -35,8 +35,9 @@ export function Screen15IdentityCapture() {
   const { next, buyerProfile, pocketPreferences, activePocketId } = useJourney();
   const { speak } = useAira();
   const [step, setStep] = useState<"capture" | "sending" | "sent">("capture");
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
+  // Pre-filled with valid dummy data so the demo flow doesn't require typing.
+  const [name, setName] = useState("Rohan Kulkarni");
+  const [mobile, setMobile] = useState("9820441234");
   const [otpSent, setOtpSent] = useState(false);
   const [sentAt, setSentAt] = useState<{ genSeconds: number; deliveredLabel: string } | null>(null);
 
