@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   PuzzleIcon,
   ShieldCheck,
+  Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
@@ -35,9 +36,19 @@ interface Section {
   confirm: string[];
 }
 
-const ACCENT_CLASSES: Record<Accent, { chip: string; icon: string; ring: string }> = {
-  forest: { chip: "bg-forest-800/10 text-forest-800", icon: "bg-forest-800 text-ivory-50", ring: "border-forest-800/15" },
-  gold: { chip: "bg-gold-500/15 text-gold-600", icon: "bg-gold-500 text-forest-950", ring: "border-gold-500/25" },
+const ACCENT_CLASSES: Record<Accent, { chip: string; icon: string; ring: string; glow: string }> = {
+  forest: {
+    chip: "bg-forest-800/10 text-forest-800",
+    icon: "bg-gradient-to-br from-forest-700 to-forest-900 text-ivory-50",
+    ring: "border-forest-800/15",
+    glow: "shadow-[0_8px_24px_-8px_rgba(35,85,52,0.45)]",
+  },
+  gold: {
+    chip: "bg-gold-500/15 text-gold-600",
+    icon: "bg-gradient-to-br from-gold-400 to-gold-600 text-forest-950",
+    ring: "border-gold-500/25",
+    glow: "shadow-[0_8px_24px_-8px_rgba(172,131,54,0.45)]",
+  },
 };
 
 // Aero Estate is the only project with real, sourced facts beyond starting
@@ -165,11 +176,32 @@ export function Screen05ProjectWalkthrough() {
 
   return (
     <ScreenShell showStages={false} title="Project walkthrough">
-      <div className="flex h-full flex-col px-5 pb-5 pt-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">Explore {selectedProject.name}</p>
-        <h1 className="mt-0.5 font-serif text-2xl text-forest-900">with Aira</h1>
+      <div className="flex h-full flex-col pb-5">
+        {selectedProject.heroImage && (
+          <motion.div
+            key={selectedProject.id}
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="relative h-40 w-full shrink-0 overflow-hidden"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={selectedProject.heroImage} alt={selectedProject.name} className="h-full w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/45 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-forest-950/50 to-transparent" />
+            <div className="absolute inset-x-4 bottom-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold-300">
+                Exploring with Aira
+              </p>
+              <h1 className="mt-0.5 font-serif text-2xl leading-tight text-ivory-50">{selectedProject.name}</h1>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-ivory-100/80">
+                <MapPin className="h-3 w-3 shrink-0" /> {selectedProject.location}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
-        <div className="no-scrollbar mt-3 flex gap-1.5 overflow-x-auto pb-1">
+        <div className="no-scrollbar mt-3 flex gap-1.5 overflow-x-auto px-5 pb-1">
           {sections.map((s, i) => (
             <button
               key={s.id}
@@ -189,7 +221,7 @@ export function Screen05ProjectWalkthrough() {
           ))}
         </div>
 
-        <div className="mt-4 flex-1 overflow-y-auto no-scrollbar">
+        <div className="mt-4 flex-1 overflow-y-auto no-scrollbar px-5">
           <AnimatePresence mode="wait">
             <motion.div
               key={section.id}
@@ -199,10 +231,15 @@ export function Screen05ProjectWalkthrough() {
               transition={{ duration: 0.25 }}
               className="space-y-3"
             >
-              <div className={cn("flex items-start gap-3 rounded-xl2 border bg-white p-3.5 shadow-card", accent.ring)}>
-                <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", accent.icon)}>
+              <div className={cn("flex items-start gap-3 rounded-xl2 border bg-white p-3.5", accent.ring, accent.glow)}>
+                <motion.span
+                  initial={{ scale: 0.6, rotate: -8 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 16 }}
+                  className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", accent.icon)}
+                >
                   <section.icon className="h-[18px] w-[18px]" />
-                </span>
+                </motion.span>
                 <div className="min-w-0">
                   <p className={cn("mb-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", accent.chip)}>
                     {section.label}
@@ -212,30 +249,26 @@ export function Screen05ProjectWalkthrough() {
               </div>
 
               {section.id === "location" && (
-                <>
-                  {selectedProject.heroImage && (
-                    <div className="relative h-32 overflow-hidden rounded-xl2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={selectedProject.heroImage} alt={selectedProject.name} className="h-full w-full object-cover" />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/70 via-transparent to-transparent" />
-                      <div className="absolute bottom-2 left-2.5 flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-xs text-ivory-100 backdrop-blur">
-                        <MapPin className="h-3 w-3" /> {selectedProject.location}
-                      </div>
-                    </div>
-                  )}
-                  <div className="overflow-hidden rounded-xl2 border border-forest-900/8 shadow-card">
-                    <iframe
-                      title={`${selectedProject.name} location map`}
-                      src={`https://www.google.com/maps?q=${encodeURIComponent(selectedProject.location)}&output=embed`}
-                      className="h-40 w-full border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
+                <div className="relative overflow-hidden rounded-xl2 border border-forest-900/8 shadow-card">
+                  <div className="flex items-center justify-between bg-forest-900 px-3 py-2">
+                    <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ivory-100">
+                      <Compass className="h-3.5 w-3.5 text-gold-400" /> Live map
+                    </span>
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-medium text-ivory-100/70">
+                      Google Maps
+                    </span>
                   </div>
-                  <p className="text-[11px] text-forest-900/40">
-                    Map centered on the stated location — verify exact plot boundaries with your HoABL advisor.
+                  <iframe
+                    title={`${selectedProject.name} location map`}
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(selectedProject.location)}&output=embed`}
+                    className="h-44 w-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <p className="bg-white px-3 py-2 text-[11px] text-forest-900/40">
+                    Centered on the stated location — verify exact plot boundaries with your HoABL advisor.
                   </p>
-                </>
+                </div>
               )}
 
               {section.id === "layout" && <ProjectMapPreview />}
@@ -246,26 +279,55 @@ export function Screen05ProjectWalkthrough() {
           </AnimatePresence>
         </div>
 
-        <div className="mt-4 flex items-center gap-2 text-[11px] text-forest-900/40">
-          <span>{idx + 1} / {sections.length} explored</span>
+        <div className="px-5">
+          <div className="mt-4 flex items-center gap-1.5">
+            {sections.map((s, i) => (
+              <span
+                key={s.id}
+                className={cn(
+                  "h-1 flex-1 rounded-full transition-colors",
+                  i <= idx ? "bg-forest-800" : "bg-forest-900/10"
+                )}
+              />
+            ))}
+          </div>
+          <Button size="lg" className="mt-3 w-full" onClick={handleContinue}>
+            {isLast ? "Find your pocket →" : "Next"}
+          </Button>
         </div>
-        <Button size="lg" className="mt-2 w-full" onClick={handleContinue}>
-          {isLast ? "Find your pocket →" : "Next"}
-        </Button>
       </div>
     </ScreenShell>
   );
 }
 
+const LAYOUT_ZONES = [
+  { cls: "left-[6%] top-[12%] w-[36%] h-[32%]", tone: "bg-gold-500/70" },
+  { cls: "left-[46%] top-[8%] w-[30%] h-[40%]", tone: "bg-forest-500/70" },
+  { cls: "left-[8%] top-[50%] w-[30%] h-[36%]", tone: "bg-forest-600/70" },
+  { cls: "left-[42%] top-[54%] w-[36%] h-[32%]", tone: "bg-gold-600/60" },
+];
+
 function ProjectMapPreview() {
   return (
-    <div className="relative h-28 overflow-hidden rounded-xl bg-gradient-to-br from-forest-700 to-forest-900">
-      <div className="absolute inset-0 opacity-20" style={{
-        backgroundImage:
-          "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(255,255,255,0.4) 14px), repeating-linear-gradient(90deg, transparent, transparent 13px, rgba(255,255,255,0.4) 14px)",
-      }} />
-      <div className="absolute bottom-2 left-2 rounded-full bg-black/30 px-2 py-0.5 text-[10px] text-ivory-100 backdrop-blur">
-        Illustrative layout — demo
+    <div className="relative h-32 overflow-hidden rounded-xl2 border border-forest-900/8 bg-gradient-to-br from-forest-800 to-forest-950 shadow-card">
+      <div
+        className="absolute inset-0 opacity-25"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(255,255,255,0.4) 14px), repeating-linear-gradient(90deg, transparent, transparent 13px, rgba(255,255,255,0.4) 14px)",
+        }}
+      />
+      {LAYOUT_ZONES.map((z, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 + i * 0.06 }}
+          className={cn("absolute rounded-lg ring-1 ring-white/20", z.cls, z.tone)}
+        />
+      ))}
+      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/40 px-2 py-1 text-[10px] font-medium text-ivory-100 backdrop-blur">
+        <LayoutGrid className="h-2.5 w-2.5" /> Illustrative layout — demo
       </div>
     </div>
   );
