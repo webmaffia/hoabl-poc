@@ -377,3 +377,17 @@ export function getPocketById(id: string): Pocket | undefined {
   }
   return undefined;
 }
+
+/**
+ * Honest scarcity signal for a project, derived from its own pockets' real
+ * availability state (not fabricated) — used to reinforce urgency at the
+ * project-selection stage of the funnel without inventing numbers.
+ */
+export function projectDemand(projectId: string): { sold: number; limited: number; total: number } {
+  const pockets = getProjectPockets(projectId);
+  return {
+    sold: pockets.filter((p) => p.availability === "sold").length,
+    limited: pockets.filter((p) => p.availability === "limited").length,
+    total: pockets.length,
+  };
+}

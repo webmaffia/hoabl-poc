@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Check, ShieldCheck, BadgeCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AiraVisual } from "@/components/aira-visual";
+import { LiveViewerBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
@@ -136,10 +137,16 @@ export function Screen01Welcome() {
         </motion.ul>
 
         <div className="mt-auto pt-8">
+          <div className="mb-3 flex items-center justify-center gap-2">
+            <LiveViewerBadge seed="landing" className="bg-white/10 text-ivory-100/80" />
+            <span className="text-xs text-ivory-100/50">exploring HoABL land right now</span>
+          </div>
           <Button variant="gold" size="lg" className="w-full" onClick={handleStart}>
             Start with Aira &rarr;
           </Button>
-          <p className="mt-3 text-center text-xs text-ivory-100/45">No commitment. Just clarity.</p>
+          <p className="mt-3 text-center text-xs text-ivory-100/45">
+            Takes ~2 minutes &middot; no commitment, just clarity.
+          </p>
         </div>
       </div>
     </div>

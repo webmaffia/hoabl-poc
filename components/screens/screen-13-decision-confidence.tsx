@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Frown, Meh, Smile, PartyPopper, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
+import { ScarcityBadge, LiveViewerBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
@@ -186,11 +187,15 @@ export function Screen13DecisionConfidence() {
               <h1 className="mt-1 font-serif text-2xl text-forest-900">Your decision summary</h1>
 
               <div className="mt-4 rounded-xl2 border border-forest-900/8 bg-white p-4 shadow-card">
-                <p className="text-xs font-semibold uppercase tracking-wide text-forest-900/40">You selected</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-forest-900/40">You selected</p>
+                  {top && <ScarcityBadge pocket={top.pocket} />}
+                </div>
                 <p className="mt-1 font-serif text-xl text-forest-900">{top?.pocket.name}</p>
                 <p className="mt-1 text-sm text-forest-900/60">
                   {formatLakh(top?.pocket.price ?? 0)} &middot; {top?.pocket.sizeSqft.toLocaleString()} sq.ft.
                 </p>
+                {top && <LiveViewerBadge seed={top.pocket.id} className="mt-2" />}
               </div>
 
               <div className="mt-4 space-y-3 text-sm text-forest-900/80">
@@ -215,7 +220,10 @@ export function Screen13DecisionConfidence() {
                 />
               </div>
 
-              <Button size="lg" className="mt-6 w-full" onClick={next}>
+              <p className="mt-5 text-center text-xs text-forest-900/45">
+                Pockets are matched to demand in real time — lock yours in now while it&rsquo;s available.
+              </p>
+              <Button size="lg" className="mt-2 w-full" onClick={next}>
                 Get my plan &amp; secure this &rarr;
               </Button>
             </motion.div>

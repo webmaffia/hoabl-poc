@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Sparkles } from "lucide-react";
 import { ScreenShell } from "@/components/screen-shell";
+import { LiveViewerBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { PROJECT, PROJECTS, PROJECT_STARTING_PRICE } from "@/lib/data";
+import { PROJECT, PROJECTS, PROJECT_STARTING_PRICE, projectDemand } from "@/lib/data";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh } from "@/lib/utils";
 
@@ -128,10 +129,13 @@ export function Screen16SelectProject() {
                   <MapPin className="h-3 w-3 shrink-0" /> {p.location}
                 </p>
                 <p className="mt-1.5 text-xs text-forest-900/60">{p.description}</p>
-                <p className="mt-2 text-sm font-semibold text-gold-600">
-                  From {p.price}
-                  {p.illustrativePrice && <span className="ml-1 text-[10px] font-normal text-forest-900/35">(illustrative)</span>}
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-gold-600">
+                    From {p.price}
+                    {p.illustrativePrice && <span className="ml-1 text-[10px] font-normal text-forest-900/35">(illustrative)</span>}
+                  </p>
+                  <DemandSignal projectId={p.id} />
+                </div>
               </div>
             </motion.button>
           ))}
@@ -139,4 +143,19 @@ export function Screen16SelectProject() {
       </div>
     </ScreenShell>
   );
+}
+
+// Prefers a real, honest scarcity signal (pockets already sold, from this
+// project's own data) over a generic viewer count — falls back to the
+// viewer badge only when there's nothing scarce to report yet.
+function DemandSignal({ projectId }: { projectId: string }) {
+  const demand = projectDemand(projectId);
+  if (demand.sold > 0) {
+    return (
+      <span className="shrink-0 text-[10px] font-semibold text-red-500">
+        {demand.sold}/{demand.total} pockets booked
+      </span>
+    );
+  }
+  return <LiveViewerBadge seed={projectId} className="shrink-0" />;
 }
