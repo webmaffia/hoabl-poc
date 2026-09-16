@@ -11,7 +11,7 @@ import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { PROJECT, PROJECTS } from "@/lib/data";
-import { cn } from "@/lib/utils";
+import { cn, formatLakh } from "@/lib/utils";
 
 const REASONS = [
   {
@@ -47,18 +47,28 @@ const REASONS = [
 ];
 
 export function Screen04ProjectMatch() {
-  const { next } = useJourney();
+  const { next, selectedProject, selectProject } = useJourney();
   const { speak } = useAira();
   const [showOthers, setShowOthers] = useState(false);
+  const isRecommended = selectedProject.id === PROJECT.id;
 
   useEffect(() => {
-    speak(`Based on everything you told me, ${PROJECT.name} is the strongest match I found for your profile.`);
+    speak(
+      isRecommended
+        ? `Based on everything you told me, ${selectedProject.name} is the strongest match I found for your profile.`
+        : `Here's ${selectedProject.name} — the project you picked.`
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedProject.id]);
 
   const proceed = () => {
     track("project_walkthrough_started");
     next();
+  };
+
+  const switchProject = (id: string) => {
+    selectProject(id);
+    setShowOthers(false);
   };
 
   useVoiceCommands([
@@ -69,25 +79,30 @@ export function Screen04ProjectMatch() {
   return (
     <ScreenShell showStages={false} title="Project match">
       <div className="flex h-full flex-col px-5 pb-6 pt-5">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">Aira recommends</p>
-          <h1 className="mt-1 font-serif text-[30px] leading-tight text-forest-900">{PROJECT.name}</h1>
-          <span className="mt-2 inline-block rounded-full bg-forest-800 px-3 py-1 text-xs font-semibold text-ivory-100">
-            Best match for your profile
-          </span>
+        <motion.div key={selectedProject.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">
+            {isRecommended ? "Aira recommends" : "You selected"}
+          </p>
+          <h1 className="mt-1 font-serif text-[30px] leading-tight text-forest-900">{selectedProject.name}</h1>
+          {isRecommended && (
+            <span className="mt-2 inline-block rounded-full bg-forest-800 px-3 py-1 text-xs font-semibold text-ivory-100">
+              Best match for your profile
+            </span>
+          )}
         </motion.div>
 
         <motion.div
+          key={`hero-${selectedProject.id}`}
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
           className="relative mt-4 h-36 overflow-hidden rounded-xl2"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={PROJECT.heroImage} alt={PROJECT.name} className="h-full w-full object-cover" />
+          <img src={selectedProject.heroImage} alt={selectedProject.name} className="h-full w-full object-cover" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/70 via-forest-950/10 to-transparent" />
           <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-1 text-xs text-ivory-100 backdrop-blur">
-            <MapPin className="h-3 w-3" /> {PROJECT.location}
+            <MapPin className="h-3 w-3" /> {selectedProject.location}
           </div>
         </motion.div>
 
@@ -140,20 +155,23 @@ export function Screen04ProjectMatch() {
                 className="overflow-hidden"
               >
                 <div className="no-scrollbar flex gap-2.5 overflow-x-auto pb-1 pt-1" style={{ WebkitOverflowScrolling: "touch" }}>
-                  {PROJECTS.map((p) => (
-                    <div
-                      key={p.id}
-                      className="relative h-24 w-36 shrink-0 overflow-hidden rounded-xl border border-forest-900/8 shadow-card"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.image} alt={p.name} draggable={false} className="h-full w-full select-none object-cover" />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/85 via-forest-950/10 to-transparent" />
-                      <div className="absolute inset-x-2 bottom-1.5">
-                        <p className="truncate text-[11px] font-semibold text-ivory-50">{p.name}</p>
-                        <p className="truncate text-[9px] text-ivory-100/70">{p.location}</p>
-                      </div>
-                    </div>
-                  ))}
+                  {[{ id: PROJECT.id, name: PROJECT.name, location: PROJECT.location, image: PROJECT.heroImage! }, ...PROJECTS]
+                    .filter((p) => p.id !== selectedProject.id)
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => switchProject(p.id)}
+                        className="relative h-24 w-36 shrink-0 overflow-hidden rounded-xl border border-forest-900/8 shadow-card"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.image} alt={p.name} draggable={false} className="h-full w-full select-none object-cover" />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/85 via-forest-950/10 to-transparent" />
+                        <div className="absolute inset-x-2 bottom-1.5 text-left">
+                          <p className="truncate text-[11px] font-semibold text-ivory-50">{p.name}</p>
+                          <p className="truncate text-[9px] text-ivory-100/70">{p.location}</p>
+                        </div>
+                      </button>
+                    ))}
                 </div>
               </motion.div>
             )}

@@ -9,7 +9,6 @@ import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
 import { questionWithOptions } from "@/lib/speech";
-import { POCKETS, getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh } from "@/lib/utils";
@@ -43,11 +42,14 @@ const CONCERN_RESPONSES: Record<Concern, string> = {
 };
 
 export function Screen13DecisionConfidence() {
-  const { dispatch, next, buyerProfile, pocketPreferences, shortlistedPockets, comparedPockets, confidenceLevel, concerns } = useJourney();
+  const { dispatch, next, buyerProfile, pocketPreferences, shortlistedPockets, comparedPockets, confidenceLevel, concerns, projectPockets } = useJourney();
   const { speak } = useAira();
   const [stage, setStage] = useState<"confidence" | "concerns" | "summary">("confidence");
 
-  const ranked = useMemo(() => rankPockets(POCKETS, buyerProfile, pocketPreferences), [buyerProfile, pocketPreferences]);
+  const ranked = useMemo(
+    () => rankPockets(projectPockets, buyerProfile, pocketPreferences),
+    [projectPockets, buyerProfile, pocketPreferences]
+  );
   const top = ranked[0];
   const rejected = ranked.find((r) => shortlistedPockets.length ? !shortlistedPockets.includes(r.pocket.id) : r.pocket.id !== top?.pocket.id);
 

@@ -10,6 +10,7 @@ export type AnalyticsEvent =
   | "profile_question_answered"
   | "profile_completed"
   | "project_recommended"
+  | "project_selected"
   | "project_walkthrough_started"
   | "project_walkthrough_completed"
   | "land_layout_previewed"

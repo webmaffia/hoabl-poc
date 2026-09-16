@@ -8,12 +8,13 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { POCKETS, getPocketById } from "@/lib/data";
+import { getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh } from "@/lib/utils";
+import { Pocket } from "@/lib/types";
 
-const ROWS: { key: string; label: string; get: (p: (typeof POCKETS)[number]) => string; scoreGet?: (p: (typeof POCKETS)[number]) => number }[] = [
+const ROWS: { key: string; label: string; get: (p: Pocket) => string; scoreGet?: (p: Pocket) => number }[] = [
   { key: "price", label: "Price", get: (p) => formatLakh(p.price) },
   { key: "size", label: "Size (sq.ft.)", get: (p) => p.sizeSqft.toLocaleString() },
   { key: "road", label: "Road access", get: (p) => tierLabel(p.roadAccess), scoreGet: (p) => p.roadAccess },
@@ -29,13 +30,16 @@ function tierLabel(v: number) {
 }
 
 export function Screen12ComparePockets() {
-  const { comparedPockets, dispatch, buyerProfile, pocketPreferences, next } = useJourney();
+  const { comparedPockets, dispatch, buyerProfile, pocketPreferences, next, projectPockets } = useJourney();
   const { speak } = useAira();
 
-  const ranked = useMemo(() => rankPockets(POCKETS, buyerProfile, pocketPreferences), [buyerProfile, pocketPreferences]);
+  const ranked = useMemo(
+    () => rankPockets(projectPockets, buyerProfile, pocketPreferences),
+    [projectPockets, buyerProfile, pocketPreferences]
+  );
 
   const ids = comparedPockets.length >= 2 ? comparedPockets : ranked.slice(0, 3).map((r) => r.pocket.id);
-  const pockets = ids.map((id) => getPocketById(id)).filter(Boolean) as typeof POCKETS;
+  const pockets = ids.map((id) => getPocketById(id)).filter(Boolean) as Pocket[];
   const scored = pockets.map((p) => ({ pocket: p, score: ranked.find((r) => r.pocket.id === p.id)?.score ?? 0 }));
   const best = scored.slice().sort((a, b) => b.score - a.score)[0];
 
@@ -60,7 +64,7 @@ export function Screen12ComparePockets() {
 
   useVoiceCommands([
     { labels: ["save", "continue", "next", "save comparison"], action: saveComparison },
-    ...POCKETS.filter((p) => p.availability !== "sold").map((p) => ({
+    ...projectPockets.filter((p) => p.availability !== "sold").map((p) => ({
       labels: [p.name],
       action: () => toggle(p.id),
     })),
@@ -73,7 +77,7 @@ export function Screen12ComparePockets() {
         <p className="mt-1 text-sm text-forest-900/50">Which one fits you better?</p>
 
         <div className="no-scrollbar mt-3 flex gap-1.5 overflow-x-auto pb-1">
-          {POCKETS.filter((p) => p.availability !== "sold").map((p) => (
+          {projectPockets.filter((p) => p.availability !== "sold").map((p) => (
             <button
               key={p.id}
               onClick={() => toggle(p.id)}
@@ -148,7 +152,7 @@ export function Screen12ComparePockets() {
   );
 }
 
-function buildAiraTake(scored: { pocket: (typeof POCKETS)[number]; score: number }[], bestId?: string) {
+function buildAiraTake(scored: { pocket: Pocket; score: number }[], bestId?: string) {
   if (!scored.length) return "Select a couple of pockets to compare.";
   const sorted = scored.slice().sort((a, b) => b.score - a.score);
   const [first, ...rest] = sorted;

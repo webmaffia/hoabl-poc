@@ -11,19 +11,22 @@ import { LiveViewerBadge, ScarcityBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { POCKETS, getPocketById } from "@/lib/data";
+import { getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh, formatINR, computeEmi } from "@/lib/utils";
 
 export function Screen11PocketDetail() {
-  const { activePocketId, dispatch, goTo, buyerProfile, pocketPreferences, shortlistedPockets } = useJourney();
+  const { activePocketId, dispatch, goTo, buyerProfile, pocketPreferences, shortlistedPockets, projectPockets } = useJourney();
   const { speak } = useAira();
 
-  const ranked = useMemo(() => rankPockets(POCKETS, buyerProfile, pocketPreferences), [buyerProfile, pocketPreferences]);
+  const ranked = useMemo(
+    () => rankPockets(projectPockets, buyerProfile, pocketPreferences),
+    [projectPockets, buyerProfile, pocketPreferences]
+  );
   const fallbackId = ranked[0]?.pocket.id;
   const pocketId = activePocketId || fallbackId;
-  const pocket = getPocketById(pocketId || "") || POCKETS[0];
+  const pocket = getPocketById(pocketId || "") || projectPockets[0];
   const score = ranked.find((r) => r.pocket.id === pocket.id)?.score ?? 0;
   const isShortlisted = shortlistedPockets.includes(pocket.id);
   const topAlt = ranked.find((r) => r.pocket.id !== pocket.id)?.pocket;

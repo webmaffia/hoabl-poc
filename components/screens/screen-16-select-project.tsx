@@ -7,20 +7,17 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { PROJECT, PROJECTS } from "@/lib/data";
+import { PROJECT, PROJECTS, PROJECT_STARTING_PRICE } from "@/lib/data";
 import { track } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
+import { cn, formatLakh } from "@/lib/utils";
 
 type Filter = "all" | "recommended";
 
 // One unified, browsable list built from real HoABL projects (same source
 // as lib/data.ts's PROJECT/PROJECTS — names, locations and images sourced
-// from hoabl.com). Only the featured project (PROJECT / Aero Estate) has
-// pocket-level data in this demo, so it's the only card that continues the
-// interactive journey — the rest are real but browse-only here, and say so
-// rather than pretending to go further than the demo actually supports.
-const STARTING_PRICE = PROJECT.verified.find((v) => v.label === "Starting price")?.value;
-
+// from hoabl.com). Every card continues the same interactive journey —
+// Aero Estate's starting price is real (from hoabl.com), the other 5 are
+// illustrative demo pricing (HoABL doesn't publish it), shown as such.
 const LISTING = [
   {
     id: PROJECT.id,
@@ -28,26 +25,26 @@ const LISTING = [
     location: PROJECT.location,
     description: PROJECT.tagline,
     image: PROJECT.heroImage!,
-    price: STARTING_PRICE,
+    price: formatLakh(PROJECT_STARTING_PRICE[PROJECT.id]),
+    illustrativePrice: false,
     recommended: true,
-    interactive: true,
   },
   ...PROJECTS.map((p) => ({
     ...p,
-    price: undefined as string | undefined,
+    price: formatLakh(PROJECT_STARTING_PRICE[p.id]),
+    illustrativePrice: true,
     recommended: false,
-    interactive: false,
   })),
 ];
 
 export function Screen16SelectProject() {
-  const { goTo } = useJourney();
+  const { selectProject: setSelectedProject, goTo } = useJourney();
   const { speak } = useAira();
   const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
     speak(
-      `Based on what you told me, ${PROJECT.name} looks like the strongest match — but feel free to browse the others too.`
+      `Based on what you told me, ${PROJECT.name} looks like the strongest match — but feel free to explore any of these.`
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -60,14 +57,9 @@ export function Screen16SelectProject() {
   const selectProject = (id: string) => {
     const item = LISTING.find((p) => p.id === id);
     if (!item) return;
-    track("project_selected", { projectId: id, interactive: item.interactive });
-    if (item.interactive) {
-      goTo("project-match");
-      return;
-    }
-    speak(
-      `${item.name} is a real HoABL project, but this demo's interactive plot-level walkthrough is only built for ${PROJECT.name} — let's continue with that one.`
-    );
+    track("project_selected", { projectId: id });
+    setSelectedProject(id);
+    goTo("project-match");
   };
 
   useVoiceCommands([
@@ -124,9 +116,9 @@ export function Screen16SelectProject() {
                     <Sparkles className="h-2.5 w-2.5" /> Recommended
                   </span>
                 )}
-                {!p.interactive && (
+                {p.illustrativePrice && (
                   <span className="absolute right-2 top-2 rounded-full bg-forest-950/70 px-2 py-0.5 text-[9px] font-medium text-ivory-100 backdrop-blur">
-                    Browse only
+                    Demo pricing
                   </span>
                 )}
               </div>
@@ -137,7 +129,8 @@ export function Screen16SelectProject() {
                 </p>
                 <p className="mt-1.5 text-xs text-forest-900/60">{p.description}</p>
                 <p className="mt-2 text-sm font-semibold text-gold-600">
-                  {p.price ? `From ${p.price.replace(" (all-in)", "")}` : "Price on request"}
+                  From {p.price}
+                  {p.illustrativePrice && <span className="ml-1 text-[10px] font-normal text-forest-900/35">(illustrative)</span>}
                 </p>
               </div>
             </motion.button>

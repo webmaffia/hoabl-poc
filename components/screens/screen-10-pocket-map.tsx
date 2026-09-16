@@ -8,12 +8,20 @@ import { ScarcityBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { POCKETS } from "@/lib/data";
 import { rankPockets, suitabilityTier } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh } from "@/lib/utils";
 
 type Tab = "matches" | "all" | "infra";
+type Budget = "all" | "lt20" | "20-35" | "35-50" | "gt50";
+
+const BUDGETS: { value: Budget; label: string; test: (price: number) => boolean }[] = [
+  { value: "all", label: "Any budget", test: () => true },
+  { value: "lt20", label: "Up to ₹20L", test: (p) => p <= 2000000 },
+  { value: "20-35", label: "₹20L–₹35L", test: (p) => p > 2000000 && p <= 3500000 },
+  { value: "35-50", label: "₹35L–₹50L", test: (p) => p > 3500000 && p <= 5000000 },
+  { value: "gt50", label: "Above ₹50L", test: (p) => p > 5000000 },
+];
 
 const TIER_COLOR: Record<string, string> = {
   Recommended: "bg-forest-700 ring-forest-700",
@@ -32,13 +40,15 @@ const TIER_TILE: Record<string, string> = {
 const MAP_BACKGROUND_URL = "/pocket-map-bg.png";
 
 export function Screen10PocketMap() {
-  const { buyerProfile, pocketPreferences, dispatch, goTo } = useJourney();
+  const { buyerProfile, pocketPreferences, dispatch, goTo, projectPockets } = useJourney();
   const { speak } = useAira();
   const [tab, setTab] = useState<Tab>("matches");
+  const [budget, setBudget] = useState<Budget>("all");
+  const budgetTest = BUDGETS.find((b) => b.value === budget)!.test;
 
   const ranked = useMemo(
-    () => rankPockets(POCKETS, buyerProfile, pocketPreferences),
-    [buyerProfile, pocketPreferences]
+    () => rankPockets(projectPockets, buyerProfile, pocketPreferences),
+    [projectPockets, buyerProfile, pocketPreferences]
   );
 
   useEffect(() => {
@@ -52,7 +62,9 @@ export function Screen10PocketMap() {
   }, []);
 
   const topIds = ranked.slice(0, 3).map((r) => r.pocket.id);
-  const visible = tab === "matches" ? ranked.filter((r) => topIds.includes(r.pocket.id)) : ranked;
+  const visible = (tab === "matches" ? ranked.filter((r) => topIds.includes(r.pocket.id)) : ranked).filter((r) =>
+    budgetTest(r.pocket.price)
+  );
 
   const handleSelect = (id: string) => {
     dispatch({ type: "SET_ACTIVE_POCKET", id });
@@ -62,7 +74,7 @@ export function Screen10PocketMap() {
   };
 
   useVoiceCommands(
-    POCKETS.filter((p) => p.availability !== "sold").map((p) => ({
+    projectPockets.filter((p) => p.availability !== "sold").map((p) => ({
       labels: [p.name],
       action: () => handleSelect(p.id),
     }))
@@ -92,6 +104,23 @@ export function Screen10PocketMap() {
           ))}
         </div>
 
+        <div className="no-scrollbar mt-2.5 flex gap-1.5 overflow-x-auto pb-1">
+          {BUDGETS.map((b) => (
+            <button
+              key={b.value}
+              onClick={() => setBudget(b.value)}
+              className={cn(
+                "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                budget === b.value
+                  ? "border-forest-800 bg-forest-800 text-ivory-100"
+                  : "border-forest-900/10 bg-white text-forest-900/60"
+              )}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
+
         <div className="relative mt-4 shrink-0 overflow-hidden rounded-xl2 border border-forest-900/10 p-3 shadow-card">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={MAP_BACKGROUND_URL} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -114,7 +143,7 @@ export function Screen10PocketMap() {
           </div>
 
           <div className="relative grid grid-cols-4 gap-2">
-            {POCKETS.map((pocket) => {
+            {projectPockets.map((pocket) => {
               const score = ranked.find((r) => r.pocket.id === pocket.id)?.score ?? 0;
               const tier = suitabilityTier(score);
               const isVisible = visible.some((r) => r.pocket.id === pocket.id);

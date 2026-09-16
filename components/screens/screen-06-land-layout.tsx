@@ -8,7 +8,6 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { POCKETS } from "@/lib/data";
 import { track } from "@/lib/analytics";
 
 const POCKET_ZONES = [
@@ -29,10 +28,10 @@ const NEXT_UP = [
 ];
 
 export function Screen06LandLayout() {
-  const { next } = useJourney();
+  const { next, projectPockets } = useJourney();
   const { speak } = useAira();
-  const limitedCount = POCKETS.filter((p) => p.availability === "limited").length;
-  const soldCount = POCKETS.filter((p) => p.availability === "sold").length;
+  const limitedCount = projectPockets.filter((p) => p.availability === "limited").length;
+  const soldCount = projectPockets.filter((p) => p.availability === "sold").length;
 
   useEffect(() => {
     speak("Here's the full layout. A few pockets are moving faster than others — I'll flag those as we go.");

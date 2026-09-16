@@ -1,4 +1,5 @@
 import { Pocket, Project } from "./types";
+import { formatLakh } from "./utils";
 
 // The featured project (PROJECT) and the "other projects" list (PROJECTS)
 // use real facts sourced from hoabl.com (name, location, price, hero image).
@@ -200,8 +201,8 @@ export const POCKETS: Pocket[] = [
     id: "pocket-e",
     name: "Pocket E",
     zone: "West Pocket",
-    price: 2450000,
-    sizeSqft: 1500,
+    price: 1950000,
+    sizeSqft: 1150,
     roadAccess: 70,
     privacy: 55,
     amenityProximity: 52,
@@ -220,8 +221,8 @@ export const POCKETS: Pocket[] = [
       "Furthest from the central amenities",
     ],
     verifiedFacts: [
-      { label: "Plot size", value: "1,500 sq.ft." },
-      { label: "Listed price", value: "₹24.5L" },
+      { label: "Plot size", value: "1,150 sq.ft." },
+      { label: "Listed price", value: "₹19.5L" },
       { label: "Location", value: "West Pocket" },
       { label: "Availability", value: "Available" },
     ],
@@ -304,6 +305,75 @@ export const POCKETS: Pocket[] = [
   },
 ];
 
+// --- Multi-project support -------------------------------------------------
+// Only Aero Estate (PROJECT above) has real, sourced facts. The other 5 real
+// HoABL projects in PROJECTS don't have published pricing or plot-level
+// data, so — to let a buyer go through the same interactive flow with any
+// of them — we generate an illustrative pocket layout for each, reusing the
+// same demo template as Aero Estate's own POCKETS (already labeled as
+// illustrative throughout the app), scaled to that project's own
+// illustrative starting price. This is explicitly demo content, not real
+// HoABL pricing or availability.
+
+export const PROJECT_STARTING_PRICE: Record<string, number> = {
+  "aero-estate": 9999000, // real, from hoabl.com
+  "sarayu-ayodhya": 15000000,
+  "one-goa-rhapsody": 8500000,
+  "nagpur-marina": 6500000,
+  "miros-riviera": 12000000,
+  "golden-gateway": 4500000,
+};
+
+const REFERENCE_AVG_POCKET_PRICE = POCKETS.reduce((sum, p) => sum + p.price, 0) / POCKETS.length;
+
+function generatePocketsFor(projectId: string): Pocket[] {
+  if (projectId === PROJECT.id) return POCKETS;
+  const startingPrice = PROJECT_STARTING_PRICE[projectId];
+  if (!startingPrice) return POCKETS;
+  const scale = startingPrice / REFERENCE_AVG_POCKET_PRICE;
+  return POCKETS.map((p) => {
+    const price = Math.round((p.price * scale) / 5000) * 5000;
+    return {
+      ...p,
+      id: `${projectId}--${p.id}`,
+      price,
+      verifiedFacts: p.verifiedFacts.map((f) => (f.label === "Listed price" ? { ...f, value: formatLakh(price) } : f)),
+    };
+  });
+}
+
+const POCKETS_BY_PROJECT: Record<string, Pocket[]> = Object.fromEntries(
+  [PROJECT.id, ...PROJECTS.map((p) => p.id)].map((id) => [id, generatePocketsFor(id)])
+);
+
+export function getProjectPockets(projectId: string): Pocket[] {
+  return POCKETS_BY_PROJECT[projectId] || POCKETS;
+}
+
+export function getProjectById(id: string): Project {
+  if (id === PROJECT.id) return PROJECT;
+  const listing = PROJECTS.find((p) => p.id === id);
+  const startingPrice = PROJECT_STARTING_PRICE[id];
+  if (!listing || !startingPrice) return PROJECT;
+  return {
+    id: listing.id,
+    name: listing.name,
+    location: listing.location,
+    heroImage: listing.image,
+    tagline: listing.description,
+    verified: [{ label: "Starting price", value: `${formatLakh(startingPrice)} (illustrative demo pricing)` }],
+    needsConfirmation: [
+      "Confirmed pricing and plot-wise availability",
+      "RERA registration number",
+      "Possession and handover timeline",
+    ],
+  };
+}
+
 export function getPocketById(id: string): Pocket | undefined {
-  return POCKETS.find((p) => p.id === id);
+  for (const pockets of Object.values(POCKETS_BY_PROJECT)) {
+    const found = pockets.find((p) => p.id === id);
+    if (found) return found;
+  }
+  return undefined;
 }

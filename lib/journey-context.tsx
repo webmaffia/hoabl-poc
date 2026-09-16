@@ -10,7 +10,7 @@ import {
   PaymentStatus,
   PocketPreferenceTag,
 } from "./types";
-import { PROJECT } from "./data";
+import { PROJECT, getProjectById, getProjectPockets } from "./data";
 import { track } from "./analytics";
 
 export const SCREEN_ORDER = [
@@ -43,6 +43,7 @@ export type ScreenId = (typeof SCREEN_ORDER)[number];
 
 interface JourneyState {
   screenIndex: number;
+  selectedProjectId: string;
   buyerProfile: BuyerProfile;
   pocketPreferences: PocketPreferenceTag[];
   pocketsViewed: string[];
@@ -71,6 +72,7 @@ const initialBuyerProfile: BuyerProfile = {
 
 const initialState: JourneyState = {
   screenIndex: 0,
+  selectedProjectId: PROJECT.id,
   buyerProfile: initialBuyerProfile,
   pocketPreferences: [],
   pocketsViewed: [],
@@ -86,6 +88,7 @@ const initialState: JourneyState = {
 
 type Action =
   | { type: "GO_TO"; screen: ScreenId }
+  | { type: "SELECT_PROJECT"; id: string }
   | { type: "NEXT" }
   | { type: "BACK" }
   | { type: "UPDATE_PROFILE"; patch: Partial<BuyerProfile> }
@@ -107,6 +110,10 @@ function reducer(state: JourneyState, action: Action): JourneyState {
       const idx = SCREEN_ORDER.indexOf(action.screen);
       return { ...state, screenIndex: idx === -1 ? state.screenIndex : idx };
     }
+    case "SELECT_PROJECT":
+      // Switching projects invalidates any pocket already chosen from a
+      // different project's layout.
+      return { ...state, selectedProjectId: action.id, activePocketId: null, shortlistedPockets: [], comparedPockets: [] };
     case "NEXT":
       return { ...state, screenIndex: Math.min(state.screenIndex + 1, SCREEN_ORDER.length - 1) };
     case "BACK":
@@ -164,6 +171,11 @@ interface JourneyContextValue extends JourneyState {
   goTo: (screen: ScreenId) => void;
   next: () => void;
   back: () => void;
+  selectProject: (id: string) => void;
+  /** The project the buyer is currently exploring — resolves selectedProjectId. */
+  selectedProject: ReturnType<typeof getProjectById>;
+  /** That project's pockets (Aero Estate's own set, or a generated illustrative layout for others). */
+  projectPockets: ReturnType<typeof getProjectPockets>;
   advisorContext: AdvisorContext;
 }
 
@@ -174,9 +186,11 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
   const currentScreen = SCREEN_ORDER[state.screenIndex];
 
   const value = useMemo<JourneyContextValue>(() => {
+    const selectedProject = getProjectById(state.selectedProjectId);
+    const projectPockets = getProjectPockets(state.selectedProjectId);
     const advisorContext: AdvisorContext = {
       buyerProfile: state.buyerProfile,
-      projectViewed: PROJECT.name,
+      projectViewed: selectedProject.name,
       pocketsViewed: state.pocketsViewed,
       shortlistedPockets: state.shortlistedPockets,
       comparedPockets: state.comparedPockets,
@@ -194,6 +208,9 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
       goTo: (screen: ScreenId) => dispatch({ type: "GO_TO", screen }),
       next: () => dispatch({ type: "NEXT" }),
       back: () => dispatch({ type: "BACK" }),
+      selectProject: (id: string) => dispatch({ type: "SELECT_PROJECT", id }),
+      selectedProject,
+      projectPockets,
       advisorContext,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

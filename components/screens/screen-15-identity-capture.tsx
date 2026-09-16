@@ -8,7 +8,7 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { POCKETS, PROJECT, getPocketById } from "@/lib/data";
+import { getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,7 @@ const PLAN_SECTIONS = (pocketName: string, projectName: string) => [
 ];
 
 export function Screen15IdentityCapture() {
-  const { next, buyerProfile, pocketPreferences, activePocketId } = useJourney();
+  const { next, buyerProfile, pocketPreferences, activePocketId, selectedProject, projectPockets } = useJourney();
   const { speak } = useAira();
   const [step, setStep] = useState<"capture" | "sending" | "sent">("capture");
   // Pre-filled with valid dummy data so the demo flow doesn't require typing.
@@ -41,8 +41,11 @@ export function Screen15IdentityCapture() {
   const [otpSent, setOtpSent] = useState(false);
   const [sentAt, setSentAt] = useState<{ genSeconds: number; deliveredLabel: string } | null>(null);
 
-  const ranked = useMemo(() => rankPockets(POCKETS, buyerProfile, pocketPreferences), [buyerProfile, pocketPreferences]);
-  const pocket = getPocketById(activePocketId || "") || ranked[0]?.pocket || POCKETS[0];
+  const ranked = useMemo(
+    () => rankPockets(projectPockets, buyerProfile, pocketPreferences),
+    [projectPockets, buyerProfile, pocketPreferences]
+  );
+  const pocket = getPocketById(activePocketId || "") || ranked[0]?.pocket || projectPockets[0];
 
   useEffect(() => {
     speak("So I can send this to you and we can pick up right where we left off — what's your name and mobile number?");
@@ -101,7 +104,7 @@ export function Screen15IdentityCapture() {
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-forest-900">
-                    Your plan — {PROJECT.name}, {pocket.name}
+                    Your plan — {selectedProject.name}, {pocket.name}
                   </p>
                   <p className="truncate text-xs text-forest-900/50">
                     Matched pockets, pricing, payment schedule, trust documents.
@@ -189,14 +192,14 @@ export function Screen15IdentityCapture() {
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-forest-900">
-                    {name || "Your"} — {PROJECT.name.replace(/\s+/g, "")} plan.pdf
+                    {name || "Your"} — {selectedProject.name.replace(/\s+/g, "")} plan.pdf
                   </p>
-                  <p className="text-xs text-forest-900/50">{PLAN_SECTIONS(pocket.name, PROJECT.name).length} pages &middot; built for your brief</p>
+                  <p className="text-xs text-forest-900/50">{PLAN_SECTIONS(pocket.name, selectedProject.name).length} pages &middot; built for your brief</p>
                 </div>
               </div>
 
               <div className="mt-4 divide-y divide-forest-900/6 overflow-hidden rounded-xl2 border border-forest-900/8 bg-white shadow-card">
-                {PLAN_SECTIONS(pocket.name, PROJECT.name).map((s, i) => (
+                {PLAN_SECTIONS(pocket.name, selectedProject.name).map((s, i) => (
                   <div key={s} className="flex items-center gap-3 px-3.5 py-2.5 text-sm text-forest-900/80">
                     <span className="w-5 shrink-0 font-mono text-[11px] text-forest-900/30">
                       {(i + 1).toString().padStart(2, "0")}

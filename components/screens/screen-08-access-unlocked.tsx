@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { POCKETS, getPocketById } from "@/lib/data";
+import { getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn, formatINR, formatLakh, computeEmi } from "@/lib/utils";
@@ -17,7 +17,7 @@ const TOKEN_PAID = 45000;
 const TENURES = [5, 10, 15];
 
 export function Screen08AccessUnlocked() {
-  const { next, dispatch, activePocketId, buyerProfile, pocketPreferences } = useJourney();
+  const { next, dispatch, activePocketId, buyerProfile, pocketPreferences, projectPockets } = useJourney();
   const { speak } = useAira();
   const [stepIdx, setStepIdx] = useState(0);
   const [done, setDone] = useState(false);
@@ -26,8 +26,11 @@ export function Screen08AccessUnlocked() {
   const [tenure, setTenure] = useState(10);
   const [remainingPaid, setRemainingPaid] = useState(false);
 
-  const ranked = useMemo(() => rankPockets(POCKETS, buyerProfile, pocketPreferences), [buyerProfile, pocketPreferences]);
-  const pocket = getPocketById(activePocketId || "") || ranked[0]?.pocket || POCKETS[0];
+  const ranked = useMemo(
+    () => rankPockets(projectPockets, buyerProfile, pocketPreferences),
+    [projectPockets, buyerProfile, pocketPreferences]
+  );
+  const pocket = getPocketById(activePocketId || "") || ranked[0]?.pocket || projectPockets[0];
   const remaining = Math.max(pocket.price - TOKEN_PAID, 0);
   const emi = computeEmi(remaining, 9.5, tenure);
 
