@@ -180,7 +180,7 @@ export function Screen05ProjectWalkthrough() {
           <span>{idx + 1} / {sections.length} explored</span>
         </div>
         <Button size="lg" className="mt-2 w-full" onClick={handleContinue}>
-          {isLast ? "Continue to layout preview →" : "Next"}
+          {isLast ? "Find your pocket →" : "Next"}
         </Button>
       </div>
     </ScreenShell>

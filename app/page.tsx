@@ -15,7 +15,6 @@ import { Screen02BuyerProfile } from "@/components/screens/screen-02-buyer-profi
 import { Screen03ProfileSummary } from "@/components/screens/screen-03-profile-summary";
 import { Screen04ProjectMatch } from "@/components/screens/screen-04-project-match";
 import { Screen05ProjectWalkthrough } from "@/components/screens/screen-05-project-walkthrough";
-import { Screen06LandLayout } from "@/components/screens/screen-06-land-layout";
 import { Screen07TokenKyc } from "@/components/screens/screen-07-token-kyc";
 import { Screen08AccessUnlocked } from "@/components/screens/screen-08-access-unlocked";
 import { Screen09PocketFinder } from "@/components/screens/screen-09-pocket-finder";
@@ -33,7 +32,6 @@ const SCREEN_COMPONENTS = {
   "profile-summary": Screen03ProfileSummary,
   "project-match": Screen04ProjectMatch,
   "project-walkthrough": Screen05ProjectWalkthrough,
-  "land-layout": Screen06LandLayout,
   "token-kyc": Screen07TokenKyc,
   "access-unlocked": Screen08AccessUnlocked,
   "pocket-finder": Screen09PocketFinder,

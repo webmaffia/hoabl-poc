@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ChevronDown } from "lucide-react";
+import { MapPin, ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { TrustBadge } from "@/components/trust/trust-badge";
@@ -11,40 +11,14 @@ import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { PROJECT, PROJECTS } from "@/lib/data";
-import { cn, formatLakh } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
-const REASONS = [
-  {
-    n: "01",
-    title: "Budget fit",
-    body: "Available plots align with your stated budget range.",
-    kind: "interpretation" as const,
-  },
-  {
-    n: "02",
-    title: "Horizon fit",
-    body: "The project's development timeline is relevant to your stated investment horizon.",
-    kind: "interpretation" as const,
-  },
-  {
-    n: "03",
-    title: "Location fit",
-    body: "Connectivity to the surrounding corridor aligns with your stated priorities.",
-    kind: "interpretation" as const,
-  },
-  {
-    n: "04",
-    title: "Plot fit",
-    body: "Available pockets include layouts matching your preferred plot characteristics.",
-    kind: "interpretation" as const,
-  },
-  {
-    n: "05",
-    title: "Risk fit",
-    body: "Project information and current limitations are presented transparently before you decide.",
-    kind: "interpretation" as const,
-  },
-];
+// The full "why this fits you" breakdown now lives entirely in the
+// walkthrough that follows this screen — repeating it here (as we used to,
+// with a 5-card list) made two consecutive screens show the same project
+// facts twice. This screen's job is just: confirm the pick, offer a quick
+// out to switch, then move on.
+const FIT_SUMMARY = "Budget, horizon, location and plot preferences all line up with what you told Aira.";
 
 export function Screen04ProjectMatch() {
   const { next, selectedProject, selectProject } = useJourney();
@@ -106,33 +80,25 @@ export function Screen04ProjectMatch() {
           </div>
         </motion.div>
 
-        <div className="mt-5 flex-1 overflow-y-auto no-scrollbar">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-forest-900/40">
-            Why this project fits you
-          </p>
-          <div className="space-y-3">
-            {REASONS.map((r, i) => (
-              <motion.div
-                key={r.n}
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.15 + i * 0.05 }}
-                className="rounded-xl border border-forest-900/8 bg-white p-3.5 shadow-card"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="font-serif text-lg text-gold-500">{r.n}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-semibold text-forest-900">{r.title}</h3>
-                      <TrustBadge kind={r.kind} />
-                    </div>
-                    <p className="text-sm text-forest-900/65">{r.body}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mt-5 flex items-start gap-3 rounded-xl2 border border-forest-900/8 bg-white p-4 shadow-card"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-600">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-forest-900">Why this fits you</h3>
+              <TrustBadge kind="interpretation" />
+            </div>
+            <p className="text-sm text-forest-900/65">{FIT_SUMMARY}</p>
           </div>
-        </div>
+        </motion.div>
+
+        <div className="mt-4 flex-1" />
 
         <div className="mt-4 space-y-2.5">
           <Button size="lg" className="w-full" onClick={proceed}>

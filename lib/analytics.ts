@@ -13,7 +13,6 @@ export type AnalyticsEvent =
   | "project_selected"
   | "project_walkthrough_started"
   | "project_walkthrough_completed"
-  | "land_layout_previewed"
   | "token_cta_clicked"
   | "kyc_started"
   | "kyc_completed"

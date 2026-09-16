@@ -22,7 +22,6 @@ export const SCREEN_ORDER = [
   "select-project",
   "project-match",
   "project-walkthrough",
-  "land-layout",
   "pocket-finder",
   "pocket-map",
   "pocket-detail",
