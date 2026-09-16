@@ -13,9 +13,9 @@ const STAGES: { label: string; screens: ScreenId[] }[] = [
   },
   {
     label: "Selection",
-    screens: ["token-kyc", "access-unlocked", "pocket-finder", "pocket-map", "pocket-detail", "compare-pockets"],
+    screens: ["pocket-finder", "pocket-map", "pocket-detail", "compare-pockets"],
   },
-  { label: "Decision", screens: ["decision-confidence"] },
+  { label: "Decision", screens: ["decision-confidence", "identity-capture", "token-kyc", "access-unlocked"] },
   { label: "Advisor", screens: ["advisor-handoff"] },
 ];
 

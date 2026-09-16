@@ -34,10 +34,9 @@ function ReservationTimer() {
 
 const BENEFITS = [
   "₹45,000 fully refundable as per applicable HoABL terms",
-  "Secure your selected pocket",
+  "Locks in your chosen pocket at today's terms",
   "Complete KYC",
-  "Access detailed plot information",
-  "Shortlist and compare plots",
+  "Hands you off to a HoABL advisor with full context",
   "Continue toward purchase after verification",
 ];
 
@@ -63,7 +62,7 @@ export function Screen07TokenKyc() {
   const [step, setStep] = useState<"overview" | "kyc" | "payment">("overview");
 
   useEffect(() => {
-    speak("This is a fully refundable token — it secures your spot and unlocks exact plot-level selection. I'll walk you through KYC.");
+    speak("This is a fully refundable token — it secures the pocket you've chosen. I'll walk you through KYC.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Pre-filled with valid dummy data so the demo flow doesn't require typing
@@ -138,14 +137,14 @@ export function Screen07TokenKyc() {
           {step === "overview" && (
             <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex h-full flex-col">
               <h1 className="text-balance font-serif text-2xl leading-tight text-forest-900">
-                Secure access to detailed land selection
+                Secure your chosen pocket
               </h1>
 
               <div className="mt-4 rounded-xl2 border border-forest-900/8 bg-white p-5 text-center shadow-card">
                 <p className="font-serif text-4xl text-forest-900">₹45,000</p>
                 <p className="mt-1 text-sm font-medium text-gold-600">Fully Refundable Token</p>
                 <p className="mt-3 text-sm text-forest-900/60">
-                  Pay ₹45,000 and complete KYC to unlock detailed land selection.
+                  Pay ₹45,000 and complete KYC to lock in your pocket before you meet your advisor.
                 </p>
                 <ReservationTimer />
               </div>

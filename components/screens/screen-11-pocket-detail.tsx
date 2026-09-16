@@ -14,7 +14,7 @@ import { useVoiceCommands } from "@/lib/voice-command-context";
 import { POCKETS, getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
-import { cn, formatLakh, formatINR } from "@/lib/utils";
+import { cn, formatLakh, formatINR, computeEmi } from "@/lib/utils";
 
 export function Screen11PocketDetail() {
   const { activePocketId, dispatch, goTo, buyerProfile, pocketPreferences, shortlistedPockets } = useJourney();
@@ -234,14 +234,6 @@ function buildSchedule(plan: PlanType, bookingPct: number): { label: string; pct
     { label: "Infrastructure", pct: infra },
     { label: "On possession", pct: possession },
   ];
-}
-
-/** Standard reducing-balance EMI formula. */
-function computeEmi(principal: number, annualRatePct: number, years: number): number {
-  const r = annualRatePct / 12 / 100;
-  const n = years * 12;
-  if (principal <= 0) return 0;
-  return Math.round((principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
 }
 
 function PaymentPlan({ price }: { price: number }) {

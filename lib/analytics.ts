@@ -29,6 +29,10 @@ export type AnalyticsEvent =
   | "concern_selected"
   | "decision_summary_viewed"
   | "advisor_handoff_clicked"
+  | "identity_otp_sent"
+  | "identity_captured"
+  | "plan_sent_whatsapp"
+  | "remaining_payment_completed"
   | "demo_reset";
 
 interface LoggedEvent {

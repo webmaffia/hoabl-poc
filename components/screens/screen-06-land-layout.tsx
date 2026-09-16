@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Lock, Check, Flame } from "lucide-react";
+import { Compass, Check, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
@@ -18,7 +18,7 @@ const POCKET_ZONES = [
   { name: "West Pocket", cls: "left-[4%] top-[46%] w-[28%] h-[44%] bg-forest-500/70" },
 ];
 
-const UNLOCKS = [
+const NEXT_UP = [
   "Detailed land layout",
   "Exact plot information",
   "Available plots",
@@ -44,12 +44,12 @@ export function Screen06LandLayout() {
     next();
   };
 
-  useVoiceCommands([{ labels: ["unlock", "continue", "next", "unlock detailed selection"], action: proceed }]);
+  useVoiceCommands([{ labels: ["explore", "continue", "next", "explore pockets"], action: proceed }]);
 
   return (
     <ScreenShell showStages={false} title="Land layout">
       <div className="flex h-full flex-col px-5 pb-5 pt-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">See what you&rsquo;ll unlock</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">Explore the full layout</p>
         <h1 className="mt-0.5 font-serif text-2xl text-forest-900">Land Layout &amp; Preview</h1>
 
         <motion.div
@@ -66,7 +66,7 @@ export function Screen06LandLayout() {
             </div>
           ))}
           <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-forest-900/80 px-2 py-1 text-[10px] font-medium text-ivory-100">
-            <Lock className="h-2.5 w-2.5" /> Plot-level view locked
+            <Compass className="h-2.5 w-2.5" /> Full layout ahead
           </div>
         </motion.div>
 
@@ -80,15 +80,16 @@ export function Screen06LandLayout() {
           )}
           <div className="rounded-xl border border-forest-900/8 bg-white p-3.5 shadow-card">
             <p className="text-sm text-forest-900/75">
-              Detailed plot selection unlocks after the refundable token + KYC.
+              Browse every pocket freely — you&rsquo;ll only pay the refundable token and complete KYC once you&rsquo;ve
+              chosen the one you want.
             </p>
           </div>
 
           <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-forest-900/40">
-            What you&rsquo;ll get
+            Coming up next
           </p>
           <ul className="space-y-2">
-            {UNLOCKS.map((u) => (
+            {NEXT_UP.map((u) => (
               <li key={u} className="flex items-center gap-2.5 rounded-xl border border-forest-900/8 bg-white px-3.5 py-2.5 text-sm text-forest-900/85 shadow-card">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-forest-800/10 text-forest-800">
                   <Check className="h-3 w-3" />
@@ -100,7 +101,7 @@ export function Screen06LandLayout() {
         </div>
 
         <Button size="lg" className="mt-4 w-full" onClick={proceed}>
-          Unlock detailed selection &rarr;
+          Explore pockets &rarr;
         </Button>
       </div>
     </ScreenShell>

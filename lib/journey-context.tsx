@@ -20,13 +20,19 @@ export const SCREEN_ORDER = [
   "project-match",
   "project-walkthrough",
   "land-layout",
-  "token-kyc",
-  "access-unlocked",
   "pocket-finder",
   "pocket-map",
   "pocket-detail",
   "compare-pockets",
   "decision-confidence",
+  // A lightweight "send me my plan" moment — name + mobile, no full KYC —
+  // before the heavier token payment + KYC step.
+  "identity-capture",
+  // Token payment + KYC now happen once the buyer has actually decided,
+  // right before handing off to a human advisor — rather than gating pocket
+  // browsing behind payment up front.
+  "token-kyc",
+  "access-unlocked",
   "advisor-handoff",
 ] as const;
 

@@ -104,7 +104,7 @@ export function Screen13DecisionConfidence() {
           ...CONCERN_OPTIONS.map((o) => ({ labels: [o.label], action: () => selectConcern(o.value) })),
           { labels: ["done", "continue", "next", "that's it"], action: proceedToSummary },
         ]
-      : [{ labels: ["continue", "next", "proceed", "advisor"], action: next }]
+      : [{ labels: ["continue", "next", "proceed", "secure with token and kyc"], action: next }]
   );
 
   return (
@@ -214,7 +214,7 @@ export function Screen13DecisionConfidence() {
               </div>
 
               <Button size="lg" className="mt-6 w-full" onClick={next}>
-                Proceed to advisor &rarr;
+                Get my plan &amp; secure this &rarr;
               </Button>
             </motion.div>
           )}

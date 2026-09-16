@@ -87,7 +87,7 @@ const SECTIONS: Section[] = [
     label: "Things to consider",
     caption: "A few things worth knowing before you go further.",
     verified: [
-      { label: "Booking process", value: "Refundable token + KYC before plot selection" },
+      { label: "Booking process", value: "Browse and shortlist freely — refundable token + KYC once you've chosen a pocket" },
     ],
     confirm: ["RERA registration number", "Final legal documentation", "Possession timelines"],
   },
