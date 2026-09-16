@@ -22,12 +22,16 @@ const config: Config = {
           600: "#3B1F5C",
           500: "#4B2E73",
         },
+        // Renamed in spirit only (kept as "ivory" since that token is used
+        // ~250+ places) — now a light lavender/purple scale instead of the
+        // earlier cream tone, to match the plum/gold brand palette instead
+        // of reading as yellowish.
         ivory: {
-          DEFAULT: "#F8F6F2",
-          50: "#FEFDFB",
-          100: "#F8F6F2",
-          200: "#EDE8DD",
-          300: "#E2D9C7",
+          DEFAULT: "#F5F1FA",
+          50: "#FCFAFE",
+          100: "#F5F1FA",
+          200: "#E9E1F4",
+          300: "#DCCFEC",
         },
         gold: {
           DEFAULT: "#AC8336",

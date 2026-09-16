@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { Compass, Minus, Plus } from "lucide-react";
 import { ScreenShell } from "@/components/screen-shell";
 import { ScarcityBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
@@ -19,6 +20,16 @@ const TIER_COLOR: Record<string, string> = {
   "Good fit": "bg-gold-500 ring-gold-500",
   Alternative: "bg-forest-900/40 ring-forest-900/40",
 };
+
+const TIER_TILE: Record<string, string> = {
+  Recommended: "border-forest-900 bg-forest-700 text-ivory-50",
+  "Good fit": "border-gold-600 bg-gold-500 text-forest-950",
+  Alternative: "border-forest-900/30 bg-white text-forest-900/80",
+};
+
+// Aerial land photo, used as the map's backdrop instead of a flat gradient.
+// Local asset — saved at public/pocket-map-bg.png.
+const MAP_BACKGROUND_URL = "/pocket-map-bg.png";
 
 export function Screen10PocketMap() {
   const { buyerProfile, pocketPreferences, dispatch, goTo } = useJourney();
@@ -81,45 +92,57 @@ export function Screen10PocketMap() {
           ))}
         </div>
 
-        <div className="relative mt-4 h-56 shrink-0 overflow-hidden rounded-xl2 border border-forest-900/8 bg-gradient-to-br from-ivory-200 to-ivory-300">
-          {tab === "infra" && (
-            <>
-              <div className="absolute left-0 top-[8%] h-1 w-full bg-forest-800/25" />
-              <div className="absolute left-[48%] top-0 h-full w-1 bg-forest-800/15" />
-              <span className="absolute left-1 top-[10%] text-[9px] text-forest-900/40">Main road</span>
-            </>
-          )}
-          {POCKETS.map((pocket) => {
-            const score = ranked.find((r) => r.pocket.id === pocket.id)?.score ?? 0;
-            const tier = suitabilityTier(score);
-            const isVisible = visible.some((r) => r.pocket.id === pocket.id);
-            const isSold = pocket.availability === "sold";
-            return (
-              <motion.button
-                key={pocket.id}
-                onClick={() => handleSelect(pocket.id)}
-                disabled={!isVisible}
-                whileTap={{ scale: 0.92 }}
-                style={{ left: `${pocket.coordinates.x}%`, top: `${pocket.coordinates.y}%` }}
-                className={cn(
-                  "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center transition-opacity",
-                  !isVisible && "opacity-25"
-                )}
-              >
-                <span
+        <div className="relative mt-4 shrink-0 overflow-hidden rounded-xl2 border border-forest-900/10 p-3 shadow-card">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={MAP_BACKGROUND_URL} alt="" className="absolute inset-0 h-full w-full object-cover" />
+
+          <div className="relative mb-2 flex items-center justify-between">
+            <span className="rounded bg-forest-950/70 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-ivory-100 backdrop-blur-sm">
+              30 ft road
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="flex h-5 w-5 items-center justify-center rounded-md border border-forest-900/15 bg-white/90 text-forest-900/50">
+                <Compass className="h-3 w-3" />
+              </span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-md border border-forest-900/15 bg-white/90 text-forest-900/50">
+                <Plus className="h-3 w-3" />
+              </span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-md border border-forest-900/15 bg-white/90 text-forest-900/50">
+                <Minus className="h-3 w-3" />
+              </span>
+            </div>
+          </div>
+
+          <div className="relative grid grid-cols-4 gap-2">
+            {POCKETS.map((pocket) => {
+              const score = ranked.find((r) => r.pocket.id === pocket.id)?.score ?? 0;
+              const tier = suitabilityTier(score);
+              const isVisible = visible.some((r) => r.pocket.id === pocket.id);
+              const isSold = pocket.availability === "sold";
+              return (
+                <motion.button
+                  key={pocket.id}
+                  onClick={() => handleSelect(pocket.id)}
+                  disabled={!isVisible}
+                  whileTap={{ scale: 0.94 }}
                   className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white shadow ring-2 ring-white",
-                    isSold ? "bg-red-400" : TIER_COLOR[tier]
+                    "flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg border-2 transition-opacity",
+                    !isVisible && "opacity-30",
+                    isSold ? "border-red-600 bg-red-500 text-white" : TIER_TILE[tier]
                   )}
                 >
-                  {pocket.name.split(" ")[1]}
-                </span>
-                <span className="mt-0.5 rounded bg-white/90 px-1 text-[9px] font-medium text-forest-900">
-                  {isSold ? "Sold" : formatLakh(pocket.price)}
-                </span>
-              </motion.button>
-            );
-          })}
+                  <span className="text-[12px] font-bold">{pocket.name.split(" ")[1]}</span>
+                  <span className="text-[10px] font-semibold opacity-90">{isSold ? "Sold" : formatLakh(pocket.price)}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <p className="relative mt-2 text-center">
+            <span className="rounded bg-forest-950/70 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-ivory-100 backdrop-blur-sm">
+              30 ft road
+            </span>
+          </p>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-forest-900/60">
