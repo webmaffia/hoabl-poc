@@ -204,7 +204,7 @@ export function Screen07TokenKyc() {
                   <input className="field" maxLength={14} value={form.aadhaar} onChange={(e) => setForm({ ...form, aadhaar: e.target.value })} placeholder="1234 5678 9012" />
                 </Field>
                 <Field label="Date of birth">
-                  <input type="date" className="field" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} />
+                  <input type="date" className="field field-date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} />
                 </Field>
                 <Field label="Mobile" error={errors.mobile}>
                   <input className="field" maxLength={10} value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value.replace(/\D/g, "") })} placeholder="9876543210" />
@@ -255,7 +255,9 @@ export function Screen07TokenKyc() {
 
       <style jsx global>{`
         .field {
+          box-sizing: border-box;
           width: 100%;
+          min-width: 0;
           border-radius: 0.75rem;
           border: 1px solid rgba(12, 31, 23, 0.12);
           background: white;
@@ -266,6 +268,18 @@ export function Screen07TokenKyc() {
         .field:focus {
           outline: none;
           border-color: #235534;
+        }
+        .field-date {
+          -webkit-appearance: none;
+          appearance: none;
+          display: block;
+        }
+        .field-date::-webkit-date-and-time-value {
+          text-align: left;
+        }
+        .field-date::-webkit-calendar-picker-indicator {
+          margin-left: 0.5rem;
+          padding: 0;
         }
       `}</style>
     </ScreenShell>
