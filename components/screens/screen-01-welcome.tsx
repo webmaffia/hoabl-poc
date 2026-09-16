@@ -2,12 +2,20 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, ShieldCheck, BadgeCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AiraOrb } from "@/components/aira-orb";
+import { AiraVisual } from "@/components/aira-visual";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
+import { cn } from "@/lib/utils";
+import { HOABL_LOGO_URL } from "@/lib/brand";
+
+// Real HoABL photography (sampled from hoabl.com's own asset bucket) rather
+// than a stock/placeholder image — keeps the landing page visually on-brand.
+const HERO_IMAGE_URL =
+  "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/Images_for_website_Hero_664x373_jpg_c1f8cf7c66.webp";
 
 const BENEFITS = [
   "Understand the project clearly",
@@ -16,9 +24,15 @@ const BENEFITS = [
   "Make a confident decision",
 ];
 
+const TRUST_BADGES = [
+  { icon: ShieldCheck, label: "Verified Projects" },
+  { icon: BadgeCheck, label: "RERA Registered" },
+  { icon: Smartphone, label: "100% Digital" },
+];
+
 export function Screen01Welcome() {
   const { next } = useJourney();
-  const { speak } = useAira();
+  const { speak, status, isSpeaking } = useAira();
 
   useEffect(() => {
     speak(
@@ -33,52 +47,100 @@ export function Screen01Welcome() {
     next();
   };
 
+  useVoiceCommands([{ labels: ["start", "start with aira", "begin", "let's start", "yes"], action: handleStart }]);
+
   return (
-    <div className="flex h-full flex-col px-5 pb-6 pt-6">
+    <div className="flex h-full flex-col overflow-y-auto bg-forest-950 text-ivory-100">
+      {/* A real photographic hero, like an actual landing page — Aira is a
+          small live badge here rather than filling the whole frame, so this
+          reads as "HoABL's site" first and "a video call" second. */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 1.04 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="mx-auto"
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative h-[58%] min-h-[340px] w-full shrink-0 overflow-hidden"
       >
-        <AiraOrb size={112} />
-      </motion.div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={HERO_IMAGE_URL} alt="" className="h-full w-full object-cover" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/55 to-forest-950/10" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-forest-950/70 via-transparent to-transparent" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15 }}
-        className="mt-5 text-center"
-      >
-        <div className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">
-          HoABL &middot; Land for a better tomorrow
+        <div className="absolute inset-x-4 top-4 flex items-center justify-between">
+          <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={HOABL_LOGO_URL} alt="The House of Abhinandan Lodha" className="h-9 w-auto" />
+            <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-gold-300/90">
+              AI Land Advisor
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              "relative h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-gold-400/70 bg-forest-800",
+              isSpeaking && "ring-2 ring-gold-400/50"
+            )}
+            role="img"
+            aria-label={status === "live" ? "Aira is live" : "Aira, your AI advisor"}
+          >
+            <AiraVisual className="h-full w-full object-cover" />
+            <span
+              className={cn(
+                "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-forest-950",
+                status === "live" ? "bg-emerald-400" : status === "connecting" ? "animate-pulse bg-gold-400" : "bg-ivory-100/40"
+              )}
+            />
+          </div>
         </div>
-        <h1 className="text-balance font-serif text-[26px] leading-[1.15] text-forest-900">
-          You&rsquo;ve spoken with our advisor. Now let Aira help you take the next step.
-        </h1>
+
+        <div className="absolute inset-x-4 bottom-4">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300">
+            Land for a better tomorrow
+          </div>
+          <h1 className="text-balance font-serif text-[28px] font-bold leading-[1.1] text-ivory-50">
+            A small step. A bigger tomorrow.
+          </h1>
+          <p className="mt-2 max-w-[280px] text-[13px] leading-snug text-ivory-100/80">
+            Aira, your AI land advisor, guides you to the right plot &mdash; verified projects, 100% online, simple and
+            clear.
+          </p>
+
+          <div className="mt-4 flex gap-2">
+            {TRUST_BADGES.map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-forest-950/60 px-2 py-2.5 text-center backdrop-blur"
+              >
+                <Icon className="h-4 w-4 text-gold-400" />
+                <span className="text-[10px] font-medium leading-tight text-ivory-100/85">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </motion.div>
 
-      <motion.ul
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-        className="mt-8 space-y-3"
-      >
-        {BENEFITS.map((b) => (
-          <li key={b} className="flex items-center gap-2.5 text-[15px] text-forest-900/85">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-forest-800/10 text-forest-800">
-              <Check className="h-3 w-3" />
-            </span>
-            {b}
-          </li>
-        ))}
-      </motion.ul>
+      <div className="flex flex-1 flex-col px-5 pb-6 pt-5">
+        <motion.ul
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="space-y-3"
+        >
+          {BENEFITS.map((b) => (
+            <li key={b} className="flex items-center gap-2.5 text-[15px] text-ivory-100/85">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-400">
+                <Check className="h-3 w-3" />
+              </span>
+              {b}
+            </li>
+          ))}
+        </motion.ul>
 
-      <div className="mt-auto pt-8">
-        <Button size="lg" className="w-full" onClick={handleStart}>
-          Start with Aira &rarr;
-        </Button>
-        <p className="mt-3 text-center text-xs text-forest-900/45">No commitment. Just clarity.</p>
+        <div className="mt-auto pt-8">
+          <Button variant="gold" size="lg" className="w-full" onClick={handleStart}>
+            Start with Aira &rarr;
+          </Button>
+          <p className="mt-3 text-center text-xs text-ivory-100/45">No commitment. Just clarity.</p>
+        </div>
       </div>
     </div>
   );

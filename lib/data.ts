@@ -1,25 +1,76 @@
 import { Pocket, Project } from "./types";
 
-// All data below is fictional demo content created for this POC.
-// It is illustrative only and does not represent a real HoABL project.
+// The featured project (PROJECT) and the "other projects" list (PROJECTS)
+// use real facts sourced from hoabl.com (name, location, price, hero image).
+// The pocket-level layout below (POCKETS) is illustrative demo content —
+// HoABL doesn't publish plot-by-plot pocket data — and is labeled as such.
 
 export const PROJECT: Project = {
-  id: "project-x",
-  name: "Project X",
-  location: "Shamshabad, Hyderabad",
-  tagline: "A premium plotted development on the western growth corridor",
+  id: "aero-estate",
+  name: "Aero Estate",
+  location: "Khopoli, Mumbai 3.0, Maharashtra",
+  tagline: "India's first AAA-rated land, ~40 minutes from Navi Mumbai International Airport",
+  heroImage: "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/Website_Image_Desktop_version_jpg_jpeg_e2857df1bd.webp",
   verified: [
-    { label: "Total land parcel", value: "42 acres (demo)" },
-    { label: "Plot sizes", value: "1,200 – 3,000 sq.ft. (demo)" },
-    { label: "Approvals", value: "Layout approval on file (demo)" },
-    { label: "Distance to ORR", value: "~6 km (demo)" },
+    { label: "Plot size", value: "148 sq.m. (~1,600 sq.ft.)" },
+    { label: "Starting price", value: "₹99.99 Lakh (all-in)" },
+    { label: "Distance to NMIA", value: "~40 minutes" },
+    { label: "Position", value: "Equidistant between Mumbai and Pune" },
   ],
   needsConfirmation: [
-    "Exact possession timelines",
-    "Final development phase plan",
-    "Applicable statutory charges",
+    "Exact plot-by-plot layout and pocket-wise pricing",
+    "RERA registration number",
+    "Possession and handover timeline",
   ],
 };
+
+export interface ProjectListing {
+  id: string;
+  name: string;
+  location: string;
+  description: string;
+  image: string;
+}
+
+// The rest of hoabl.com/projects, for "see other projects" — real names,
+// locations and images, sourced the same way as PROJECT above.
+export const PROJECTS: ProjectListing[] = [
+  {
+    id: "sarayu-ayodhya",
+    name: "The Sarayu Ayodhya",
+    location: "Ayodhya, Uttar Pradesh",
+    description: "A 7-star land development in Ayodhya",
+    image: "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/Web_Site_Banner_June_19x2_02_jpg_0cda8162fc.webp",
+  },
+  {
+    id: "one-goa-rhapsody",
+    name: "One Goa — The Rhapsody",
+    location: "Bicholim, Goa",
+    description: "A climate-positive residential community with clubhouse and beach access",
+    image: "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/One_Goa_Image_1_jpg_771bf9993b.webp",
+  },
+  {
+    id: "nagpur-marina",
+    name: "Nagpur Marina",
+    location: "Nagpur, Maharashtra",
+    description: "A 78-acre waterfront land development",
+    image: "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/Web_Site_Banner_Nagpur_01_jpg_4b8b661ba4.webp",
+  },
+  {
+    id: "miros-riviera",
+    name: "Miros Riviera Resort Villas",
+    location: "Vasco da Gama, Goa",
+    description: "Fully-furnished resort villas with ownership and rental options",
+    image: "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/hero_banner_desktop_jpg_a7e77cadc1.webp",
+  },
+  {
+    id: "golden-gateway",
+    name: "Golden Gateway Mumbai 3.0",
+    location: "Neral, Maharashtra",
+    description: "Weekend residential plots at the foothills of Matheran",
+    image: "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/Flight_2_png_4740a0ed9b.webp",
+  },
+];
 
 export const POCKETS: Pocket[] = [
   {

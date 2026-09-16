@@ -8,8 +8,8 @@ body {
 }
 
 body {
-  background-color: #12301f;
-  color: #0c1f17;
+  background-color: #1a0f2e;
+  color: #151519;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -18,7 +18,7 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(12, 31, 23, 0.25);
+  background: rgba(21, 21, 25, 0.25);
   border-radius: 999px;
 }
 

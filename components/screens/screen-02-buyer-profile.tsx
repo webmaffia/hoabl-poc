@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ScreenShell } from "@/components/screen-shell";
+import { AiraVisual } from "@/components/aira-visual";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { questionWithOptions } from "@/lib/speech";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -62,10 +65,10 @@ const STEPS: Step[] = [
     id: "location",
     question: "Which location or project are you most interested in?",
     options: [
-      { value: "project-x", label: "Project X (Hyderabad)" },
+      { value: "aero-estate", label: "Aero Estate (Khopoli)" },
       { value: "open", label: "Open to recommendations" },
     ],
-    apply: (_p, v) => ({ location: v[0] === "project-x" ? "Project X (Hyderabad)" : "Open to recommendations" }),
+    apply: (_p, v) => ({ location: v[0] === "aero-estate" ? "Aero Estate (Khopoli)" : "Open to recommendations" }),
   },
   {
     id: "horizon",
@@ -176,13 +179,13 @@ export function Screen02BuyerProfile() {
     }
   };
 
-  const handleContinue = () => {
-    if (selection.length === 0) return;
-    const patch = step.apply(buyerProfile, selection);
+  const submitAnswer = (values: string[]) => {
+    if (values.length === 0) return;
+    const patch = step.apply(buyerProfile, values);
     dispatch({ type: "UPDATE_PROFILE", patch });
-    track("profile_question_answered", { question: step.id, answer: selection });
+    track("profile_question_answered", { question: step.id, answer: values });
 
-    const answerLabels = step.options.filter((o) => selection.includes(o.value)).map((o) => o.label).join(", ");
+    const answerLabels = step.options.filter((o) => values.includes(o.value)).map((o) => o.label).join(", ");
     setMessages((prev) => [...prev, { id: `user-${stepIdx}`, from: "user", text: answerLabels }]);
     setSelection([]);
 
@@ -209,17 +212,43 @@ export function Screen02BuyerProfile() {
     }, 650);
   };
 
+  const handleContinue = () => submitAnswer(selection);
+
+  useVoiceCommands(
+    typing
+      ? []
+      : step.multi
+      ? [
+          ...step.options.map((o) => ({ labels: [o.label], action: () => toggleOption(o.value) })),
+          {
+            labels: ["done", "continue", "next", "send", "that's it", "submit"],
+            action: () => submitAnswer(selection),
+          },
+        ]
+      : step.options.map((o) => ({ labels: [o.label], action: () => submitAnswer([o.value]) }))
+  );
+
   const progressPct = ((stepIdx + 1) / STEPS.length) * 100;
 
   return (
     <ScreenShell showStages={false} title="Your buyer profile">
-      <div className="flex h-full flex-col px-5 pb-5 pt-3">
-        <Progress value={progressPct} />
-        <p className="mt-2 text-[11px] text-forest-900/40">
-          Question {stepIdx + 1} of {STEPS.length}
-        </p>
+      <div className="flex h-full flex-col px-5 pb-5 pt-4">
+        <div className="mb-3 flex items-center gap-3 rounded-2xl border border-gold-400/20 bg-white/70 px-3.5 py-2.5 shadow-card backdrop-blur">
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-gold-400/60">
+            <AiraVisual className="h-full w-full object-cover" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[13px] font-semibold text-forest-900">Building your profile</span>
+              <span className="shrink-0 text-[11px] font-semibold text-gold-600">
+                {stepIdx + 1}/{STEPS.length}
+              </span>
+            </div>
+            <Progress value={progressPct} className="mt-1.5" />
+          </div>
+        </div>
 
-        <div className="mt-3 flex-1 space-y-3 overflow-y-auto no-scrollbar pb-2">
+        <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar pb-2">
           <AnimatePresence initial={false}>
             {messages.map((m) => (
               <motion.div
@@ -230,10 +259,10 @@ export function Screen02BuyerProfile() {
               >
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-snug shadow-card",
+                    "max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-snug shadow-card",
                     m.from === "user"
-                      ? "rounded-br-sm bg-forest-800 text-ivory-100"
-                      : "rounded-bl-sm border border-forest-900/8 bg-white text-forest-900"
+                      ? "rounded-br-sm bg-gradient-to-br from-forest-700 to-forest-800 text-ivory-100"
+                      : "rounded-bl-sm border border-gold-400/15 bg-white text-forest-900"
                   )}
                 >
                   {m.text}
@@ -241,8 +270,11 @@ export function Screen02BuyerProfile() {
               </motion.div>
             ))}
             {typing && (
-              <motion.div key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-forest-900/8 bg-white px-3.5 py-3 shadow-card">
+              <motion.div key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end justify-start gap-2">
+                <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full border border-gold-400/50">
+                  <AiraVisual className="h-full w-full object-cover" />
+                </div>
+                <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-gold-400/15 bg-white px-3.5 py-3 shadow-card">
                   {[0, 1, 2].map((i) => (
                     <motion.span
                       key={i}
@@ -263,9 +295,9 @@ export function Screen02BuyerProfile() {
             key={step.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-2 pt-1"
+            className="space-y-2.5 pt-1"
           >
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               {step.options.map((opt) => {
                 const selected = selection.includes(opt.value);
                 return (
@@ -273,13 +305,21 @@ export function Screen02BuyerProfile() {
                     key={opt.value}
                     onClick={() => toggleOption(opt.value)}
                     className={cn(
-                      "rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
+                      "relative flex min-h-[52px] items-center rounded-2xl border-2 px-3.5 py-2.5 text-left text-[13.5px] font-medium leading-snug transition-all",
                       selected
-                        ? "border-forest-800 bg-forest-800 text-ivory-100"
-                        : "border-forest-900/15 bg-white text-forest-900 hover:border-forest-800/40"
+                        ? "border-gold-500 bg-gold-500/10 text-forest-900 shadow-card"
+                        : "border-forest-900/10 bg-white text-forest-900 hover:border-gold-400/40 hover:shadow-card"
                     )}
                   >
-                    {opt.label}
+                    <span className="pr-5">{opt.label}</span>
+                    <span
+                      className={cn(
+                        "absolute right-2.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full border transition-colors",
+                        selected ? "border-gold-500 bg-gold-500 text-white" : "border-forest-900/20 bg-white"
+                      )}
+                    >
+                      {selected && <Check className="h-2.5 w-2.5" />}
+                    </span>
                   </button>
                 );
               })}
@@ -292,9 +332,10 @@ export function Screen02BuyerProfile() {
             <button
               onClick={handleContinue}
               disabled={selection.length === 0}
-              className="mt-1 w-full rounded-xl bg-forest-800 py-3 text-[15px] font-medium text-ivory-100 transition-opacity disabled:opacity-40"
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-600 py-3.5 text-[15px] font-semibold text-forest-950 shadow-elevated transition-opacity disabled:opacity-40"
             >
-              {isLast ? "Build my profile →" : "Send"}
+              {isLast ? "Build my profile" : "Send"}
+              <ArrowRight className="h-4 w-4" />
             </button>
           </motion.div>
         )}

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { POCKETS } from "@/lib/data";
 import { track } from "@/lib/analytics";
 
@@ -37,6 +38,13 @@ export function Screen06LandLayout() {
     speak("Here's the full layout. A few pockets are moving faster than others — I'll flag those as we go.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const proceed = () => {
+    track("land_layout_previewed");
+    next();
+  };
+
+  useVoiceCommands([{ labels: ["unlock", "continue", "next", "unlock detailed selection"], action: proceed }]);
 
   return (
     <ScreenShell showStages={false} title="Land layout">
@@ -91,14 +99,7 @@ export function Screen06LandLayout() {
           </ul>
         </div>
 
-        <Button
-          size="lg"
-          className="mt-4 w-full"
-          onClick={() => {
-            track("land_layout_previewed");
-            next();
-          }}
-        >
+        <Button size="lg" className="mt-4 w-full" onClick={proceed}>
           Unlock detailed selection &rarr;
         </Button>
       </div>

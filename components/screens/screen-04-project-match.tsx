@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
-import { motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapPin, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
-import { PROJECT } from "@/lib/data";
+import { PROJECT, PROJECTS } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
 const REASONS = [
   {
@@ -47,11 +49,22 @@ const REASONS = [
 export function Screen04ProjectMatch() {
   const { next } = useJourney();
   const { speak } = useAira();
+  const [showOthers, setShowOthers] = useState(false);
 
   useEffect(() => {
     speak(`Based on everything you told me, ${PROJECT.name} is the strongest match I found for your profile.`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const proceed = () => {
+    track("project_walkthrough_started");
+    next();
+  };
+
+  useVoiceCommands([
+    { labels: ["explore", "continue", "next", "explore with aira", "yes"], action: proceed },
+    { labels: ["see other projects", "other projects"], action: () => setShowOthers((v) => !v) },
+  ]);
 
   return (
     <ScreenShell showStages={false} title="Project match">
@@ -68,8 +81,11 @@ export function Screen04ProjectMatch() {
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="relative mt-4 h-36 overflow-hidden rounded-xl2 bg-gradient-to-br from-forest-600 via-forest-800 to-forest-950"
+          className="relative mt-4 h-36 overflow-hidden rounded-xl2"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={PROJECT.heroImage} alt={PROJECT.name} className="h-full w-full object-cover" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/70 via-forest-950/10 to-transparent" />
           <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-1 text-xs text-ivory-100 backdrop-blur">
             <MapPin className="h-3 w-3" /> {PROJECT.location}
           </div>
@@ -104,19 +120,44 @@ export function Screen04ProjectMatch() {
         </div>
 
         <div className="mt-4 space-y-2.5">
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={() => {
-              track("project_walkthrough_started");
-              next();
-            }}
-          >
+          <Button size="lg" className="w-full" onClick={proceed}>
             Explore with Aira &rarr;
           </Button>
-          <button className="mx-auto block text-sm font-medium text-forest-900/50 hover:text-forest-900">
+          <button
+            onClick={() => setShowOthers((v) => !v)}
+            className="mx-auto flex items-center gap-1 text-sm font-medium text-forest-900/50 hover:text-forest-900"
+          >
             See other projects
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showOthers && "rotate-180")} />
           </button>
+
+          <AnimatePresence initial={false}>
+            {showOthers && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="no-scrollbar flex gap-2.5 overflow-x-auto pb-1 pt-1" style={{ WebkitOverflowScrolling: "touch" }}>
+                  {PROJECTS.map((p) => (
+                    <div
+                      key={p.id}
+                      className="relative h-24 w-36 shrink-0 overflow-hidden rounded-xl border border-forest-900/8 shadow-card"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.image} alt={p.name} draggable={false} className="h-full w-full select-none object-cover" />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/85 via-forest-950/10 to-transparent" />
+                      <div className="absolute inset-x-2 bottom-1.5">
+                        <p className="truncate text-[11px] font-semibold text-ivory-50">{p.name}</p>
+                        <p className="truncate text-[9px] text-ivory-100/70">{p.location}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </ScreenShell>

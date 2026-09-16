@@ -10,6 +10,7 @@ import { VerifiedInfo, ConfirmWithHoabl } from "@/components/trust/trust-section
 import { LiveViewerBadge, ScarcityBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { POCKETS, getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
@@ -38,6 +39,23 @@ export function Screen11PocketDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pocket.id]);
 
+  const shortlist = () => {
+    dispatch({ type: "TOGGLE_SHORTLIST", id: pocket.id });
+    track("pocket_shortlisted", { pocketId: pocket.id });
+  };
+
+  const compare = () => {
+    dispatch({ type: "SET_COMPARED", ids: Array.from(new Set([pocket.id, ...ranked.slice(0, 3).map((r) => r.pocket.id)])).slice(0, 3) });
+    track("pocket_compared", { pocketId: pocket.id });
+    goTo("compare-pockets");
+  };
+
+  useVoiceCommands([
+    { labels: ["shortlist", "save", "like"], action: shortlist },
+    { labels: ["compare", "compare pockets"], action: compare },
+    { labels: ["view on map", "map", "back to map"], action: () => goTo("pocket-map") },
+  ]);
+
   return (
     <ScreenShell showStages={false} title="Pocket detail">
       <div className="flex h-full flex-col overflow-y-auto no-scrollbar px-5 pb-5 pt-4">
@@ -48,10 +66,7 @@ export function Screen11PocketDetail() {
               <p className="text-sm text-forest-900/50">{pocket.description.split(".")[0]} &middot; {pocket.zone}</p>
             </div>
             <button
-              onClick={() => {
-                dispatch({ type: "TOGGLE_SHORTLIST", id: pocket.id });
-                track("pocket_shortlisted", { pocketId: pocket.id });
-              }}
+              onClick={shortlist}
               className={cn(
                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border",
                 isShortlisted ? "border-red-400 bg-red-50 text-red-500" : "border-forest-900/10 text-forest-900/40"
@@ -133,13 +148,7 @@ export function Screen11PocketDetail() {
           <Button variant="outline" onClick={() => goTo("pocket-map")}>
             <Map className="h-4 w-4" /> View on map
           </Button>
-          <Button
-            onClick={() => {
-              dispatch({ type: "SET_COMPARED", ids: Array.from(new Set([pocket.id, ...ranked.slice(0, 3).map((r) => r.pocket.id)])).slice(0, 3) });
-              track("pocket_compared", { pocketId: pocket.id });
-              goTo("compare-pockets");
-            }}
-          >
+          <Button onClick={compare}>
             <GitCompare className="h-4 w-4" /> Compare
           </Button>
         </div>

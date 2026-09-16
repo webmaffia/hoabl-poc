@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { questionWithOptions } from "@/lib/speech";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -58,12 +59,21 @@ export function Screen09PocketFinder() {
     });
   };
 
-  const handleFind = () => {
-    dispatch({ type: "SET_POCKET_PREFERENCES", prefs: selected });
+  const handleFind = (prefs: PocketPreferenceTag[]) => {
+    if (prefs.length === 0) return;
+    dispatch({ type: "SET_POCKET_PREFERENCES", prefs });
     track("pocket_finder_started");
-    track("pocket_preference_selected", { preferences: selected });
+    track("pocket_preference_selected", { preferences: prefs });
     next();
   };
+
+  useVoiceCommands([
+    ...OPTIONS.map((o) => ({ labels: [o.label], action: () => toggle(o.value) })),
+    {
+      labels: ["find", "find matching pockets", "done", "continue", "next"],
+      action: () => handleFind(selected),
+    },
+  ]);
 
   return (
     <ScreenShell showStages={false} title="Pocket finder">
@@ -98,7 +108,7 @@ export function Screen09PocketFinder() {
           })}
         </div>
 
-        <Button size="lg" className="mt-2 w-full" disabled={selected.length === 0} onClick={handleFind}>
+        <Button size="lg" className="mt-2 w-full" disabled={selected.length === 0} onClick={() => handleFind(selected)}>
           Find matching pockets &rarr;
         </Button>
       </div>

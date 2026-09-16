@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +66,16 @@ export function Screen07TokenKyc() {
     speak("This is a fully refundable token — it secures your spot and unlocks exact plot-level selection. I'll walk you through KYC.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [form, setForm] = useState<KycForm>({ fullName: "", pan: "", aadhaar: "", dob: "", mobile: "", email: "" });
+  // Pre-filled with valid dummy data so the demo flow doesn't require typing
+  // — passes the same validation as real input would.
+  const [form, setForm] = useState<KycForm>({
+    fullName: "Rahul Sharma",
+    pan: "ABCDE1234F",
+    aadhaar: "1234 5678 9012",
+    dob: "1990-05-14",
+    mobile: "9876543210",
+    email: "rahul.sharma@example.com",
+  });
   const [selfieDone, setSelfieDone] = useState(false);
   const [method, setMethod] = useState<PayMethod>("upi");
   const [touched, setTouched] = useState(false);
@@ -107,6 +117,19 @@ export function Screen07TokenKyc() {
     dispatch({ type: "SET_PAYMENT", status: "processing" });
     next();
   };
+
+  useVoiceCommands(
+    step === "overview"
+      ? [{ labels: ["pay", "start", "continue", "pay and complete kyc"], action: startFlow }]
+      : step === "kyc"
+      ? [{ labels: ["continue", "next", "submit", "continue to payment"], action: submitKyc }]
+      : [
+          { labels: ["upi"], action: () => setMethod("upi") },
+          { labels: ["net banking", "netbanking", "bank"], action: () => setMethod("netbanking") },
+          { labels: ["card", "credit card", "debit card"], action: () => setMethod("card") },
+          { labels: ["pay", "pay now", "pay 45000"], action: pay },
+        ]
+  );
 
   return (
     <ScreenShell showBack={step === "overview"} showStages={false} title="Token & KYC">

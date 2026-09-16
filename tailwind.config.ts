@@ -9,36 +9,41 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // HoABL brand palette (sampled from hoabl.com's own CSS) — deep
+        // plum/near-black grounds with a bronze-gold accent, replacing the
+        // prototype's original green placeholder theme. Token names (forest/
+        // gold/ivory) are kept as-is so every screen that already references
+        // them re-themes automatically.
         forest: {
-          950: "#08130F",
-          900: "#0C1F17",
-          800: "#12301F",
-          700: "#1A4229",
-          600: "#235534",
-          500: "#2F6B43",
+          950: "#0A0310",
+          900: "#151519",
+          800: "#1A0F2E",
+          700: "#2B153F",
+          600: "#3B1F5C",
+          500: "#4B2E73",
         },
         ivory: {
-          DEFAULT: "#FBF7EE",
-          50: "#FEFDFA",
-          100: "#FBF7EE",
-          200: "#F4ECD9",
-          300: "#EBDFC3",
+          DEFAULT: "#F8F6F2",
+          50: "#FEFDFB",
+          100: "#F8F6F2",
+          200: "#EDE8DD",
+          300: "#E2D9C7",
         },
         gold: {
-          DEFAULT: "#B98A3E",
+          DEFAULT: "#AC8336",
           50: "#F8EFDD",
-          400: "#C9A05C",
-          500: "#B98A3E",
-          600: "#96702F",
+          400: "#DDBD81",
+          500: "#AC8336",
+          600: "#8A6A2B",
         },
       },
       fontFamily: {
-        serif: ["Georgia", "Cambria", "'Times New Roman'", "serif"],
+        serif: ["'Inria Serif'", "Georgia", "Cambria", "'Times New Roman'", "serif"],
         sans: [
+          "'Inria Sans'",
           "-apple-system",
           "BlinkMacSystemFont",
           "'Segoe UI'",
-          "Inter",
           "Helvetica",
           "Arial",
           "sans-serif",

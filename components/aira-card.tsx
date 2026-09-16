@@ -11,8 +11,8 @@ interface AiraCardProps {
   className?: string;
 }
 
-/** A vertical (portrait-oriented), ringed presentation of Aira's live/fallback avatar — used by the draggable floating widget. */
-export function AiraCard({ width = 84, height = 128, className }: AiraCardProps) {
+/** A vertical (portrait-oriented), ringed presentation of Aira's live/fallback avatar — used by the floating widget. */
+export function AiraCard({ width = 68, height = 100, className }: AiraCardProps) {
   const { status, isSpeaking } = useAira();
 
   return (

@@ -8,8 +8,10 @@ import { ScreenShell } from "@/components/screen-shell";
 import { VerifiedInfo, ConfirmWithHoabl } from "@/components/trust/trust-sections";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { PROJECT } from "@/lib/data";
 
 interface Section {
   id: string;
@@ -25,52 +27,51 @@ const SECTIONS: Section[] = [
     label: "Location",
     caption: "Your priority was accessibility, so let's start with how the project connects to the surrounding area.",
     verified: [
-      { label: "Location", value: "Shamshabad, Hyderabad" },
-      { label: "Distance to ORR", value: "~6 km (demo)" },
-      { label: "Nearest airport", value: "~14 km (demo)" },
+      { label: "Location", value: PROJECT.location },
+      { label: "Distance to NMIA", value: "~40 minutes" },
+      { label: "Position", value: "Equidistant between Mumbai and Pune" },
     ],
-    confirm: ["Live traffic conditions", "Future road-widening plans"],
+    confirm: ["Exact road route and drive time in traffic", "Local infrastructure build-out timeline"],
   },
   {
     id: "connectivity",
     label: "Connectivity",
-    caption: "Here's how the project links to the wider road network today.",
+    caption: "Here's how the project links to the wider region today.",
     verified: [
-      { label: "Main access road", value: "4-lane arterial (demo)" },
-      { label: "Nearest highway junction", value: "~5 km (demo)" },
+      { label: "Airport", value: "Navi Mumbai International Airport — operational" },
+      { label: "Regional standing", value: "#1 of 8 national micro-markets, per Colliers (as cited by HoABL)" },
     ],
-    confirm: ["Upcoming metro extension timelines"],
+    confirm: ["Upcoming highway/expressway specifics"],
   },
   {
     id: "development",
     label: "Development vision",
-    caption: "This is the broader vision the developer has shared for the corridor.",
+    caption: "This is the broader vision the developer has shared for the region.",
     verified: [
-      { label: "Master plan status", value: "Approved layout on file (demo)" },
-      { label: "Phase", value: "Phase 1 of 3 (demo)" },
+      { label: "Committed regional capital", value: "₹3,00,000 crore (as cited by HoABL)" },
+      { label: "Developer", value: "House of Abhinandan Lodha Estate Holdings Pvt Ltd" },
     ],
-    confirm: ["Exact phase-wise handover dates", "Future commercial zoning"],
+    confirm: ["Master-plan phase-wise handover dates", "Future commercial zoning"],
   },
   {
     id: "amenities",
-    label: "Amenities & infrastructure",
-    caption: "Since amenities mattered to you, here's what's planned nearby.",
+    label: "Amenities & pricing",
+    caption: "Since amenities mattered to you, here's what's confirmed so far.",
     verified: [
-      { label: "Planned central park", value: "6 acres (demo)" },
-      { label: "Internal roads", value: "30–40 ft wide (demo)" },
-      { label: "Utilities", value: "Underground power, water line planned (demo)" },
+      { label: "Plot size offered", value: "148 sq.m. (~1,600 sq.ft.)" },
+      { label: "Starting price", value: "₹99.99 Lakh (all-in)" },
     ],
-    confirm: ["Amenity construction timeline", "Maintenance charges post-handover"],
+    confirm: ["Full on-site amenity list", "Maintenance charges post-handover"],
   },
   {
     id: "layout",
     label: "Land layout",
-    caption: "The layout is organized into four pockets, each with a different character.",
+    caption: "Here's an illustrative pocket layout, to show how plots typically get organized — not this project's actual released plan.",
     verified: [
-      { label: "Total pockets", value: "4 (North, Central Park, East, West)" },
-      { label: "Plot sizes", value: "1,200 – 3,000 sq.ft. (demo)" },
+      { label: "Pockets shown", value: "4 illustrative pockets (demo layout)" },
+      { label: "Plot sizes shown", value: "1,500 – 2,100 sq.ft. (demo layout)" },
     ],
-    confirm: ["Exact plot-by-plot pricing (unlocks after token + KYC)"],
+    confirm: ["This project's actual plot-by-plot layout and pricing (unlocks after token + KYC)"],
   },
   {
     id: "pocket-logic",
@@ -88,7 +89,7 @@ const SECTIONS: Section[] = [
     verified: [
       { label: "Booking process", value: "Refundable token + KYC before plot selection" },
     ],
-    confirm: ["Applicable statutory charges", "Final legal documentation", "Possession timelines"],
+    confirm: ["RERA registration number", "Final legal documentation", "Possession timelines"],
   },
 ];
 
@@ -113,10 +114,15 @@ export function Screen05ProjectWalkthrough() {
     setIdx((i) => i + 1);
   };
 
+  useVoiceCommands([
+    { labels: ["next", "continue"], action: handleContinue },
+    ...SECTIONS.map((s, i) => ({ labels: [s.label], action: () => setIdx(i) })),
+  ]);
+
   return (
     <ScreenShell showStages={false} title="Project walkthrough">
       <div className="flex h-full flex-col px-5 pb-5 pt-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">Explore Project X</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">Explore {PROJECT.name}</p>
         <h1 className="mt-0.5 font-serif text-2xl text-forest-900">with Aira</h1>
 
         <div className="no-scrollbar mt-3 flex gap-1.5 overflow-x-auto pb-1">

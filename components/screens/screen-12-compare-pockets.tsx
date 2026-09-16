@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { POCKETS, getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
@@ -51,6 +52,19 @@ export function Screen12ComparePockets() {
     speak(airaTake);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [airaTake]);
+
+  const saveComparison = () => {
+    track("decision_summary_viewed");
+    next();
+  };
+
+  useVoiceCommands([
+    { labels: ["save", "continue", "next", "save comparison"], action: saveComparison },
+    ...POCKETS.filter((p) => p.availability !== "sold").map((p) => ({
+      labels: [p.name],
+      action: () => toggle(p.id),
+    })),
+  ]);
 
   return (
     <ScreenShell showStages={false} title="Compare pockets">
@@ -125,10 +139,7 @@ export function Screen12ComparePockets() {
         <Button
           size="lg"
           className="mt-3 w-full"
-          onClick={() => {
-            track("decision_summary_viewed");
-            next();
-          }}
+          onClick={saveComparison}
         >
           Save comparison
         </Button>

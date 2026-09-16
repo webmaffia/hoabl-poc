@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { HOABL_LOGO_URL } from "@/lib/brand";
 
 export function DeviceFrame({ children }: { children: React.ReactNode }) {
   return (
@@ -8,8 +9,10 @@ export function DeviceFrame({ children }: { children: React.ReactNode }) {
       {/* Desktop presentation: journey context + phone + info panel */}
       <div className="hidden lg:flex lg:w-full lg:max-w-6xl lg:items-center lg:justify-center lg:gap-10 lg:px-8">
         <aside className="w-64 shrink-0 text-ivory-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={HOABL_LOGO_URL} alt="The House of Abhinandan Lodha" className="mb-3 h-11 w-auto" />
           <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">
-            HoABL Prototype
+            AI Prototype
           </div>
           <h1 className="font-serif text-2xl leading-tight text-ivory-50">
             AI Land Advisor

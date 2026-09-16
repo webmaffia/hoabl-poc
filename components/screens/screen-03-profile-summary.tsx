@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -25,6 +26,16 @@ export function Screen03ProfileSummary() {
     speak("Here's the profile I've built for you. Take a look, and let me know if anything needs a tweak.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const proceed = () => {
+    track("project_recommended");
+    next();
+  };
+
+  useVoiceCommands([
+    { labels: ["continue", "next", "see my project match", "yes", "looks good"], action: proceed },
+    { labels: ["edit", "edit my answers", "go back", "back"], action: () => goTo("buyer-profile") },
+  ]);
 
   const rows = [
     { label: "Primary purpose", value: capitalize(buyerProfile.purpose) },
@@ -69,14 +80,7 @@ export function Screen03ProfileSummary() {
         </motion.div>
 
         <div className="mt-6 space-y-3">
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={() => {
-              track("project_recommended");
-              next();
-            }}
-          >
+          <Button size="lg" className="w-full" onClick={proceed}>
             See my project match &rarr;
           </Button>
           <button

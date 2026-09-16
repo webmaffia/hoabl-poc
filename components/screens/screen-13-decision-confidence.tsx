@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { questionWithOptions } from "@/lib/speech";
 import { POCKETS, getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
@@ -88,6 +89,24 @@ export function Screen13DecisionConfidence() {
     speak(CONCERN_RESPONSES[c]);
   };
 
+  const proceedToSummary = () => {
+    if (concerns.length === 0) return;
+    setStage("summary");
+    track("decision_summary_viewed");
+    speakSummary();
+  };
+
+  useVoiceCommands(
+    stage === "confidence"
+      ? CONFIDENCE_OPTIONS.map((o) => ({ labels: [o.label], action: () => selectConfidence(o.value) }))
+      : stage === "concerns"
+      ? [
+          ...CONCERN_OPTIONS.map((o) => ({ labels: [o.label], action: () => selectConcern(o.value) })),
+          { labels: ["done", "continue", "next", "that's it"], action: proceedToSummary },
+        ]
+      : [{ labels: ["continue", "next", "proceed", "advisor"], action: next }]
+  );
+
   return (
     <ScreenShell showStages title="Decision confidence">
       <div className="flex h-full flex-col overflow-y-auto no-scrollbar px-5 pb-5 pt-4">
@@ -152,11 +171,7 @@ export function Screen13DecisionConfidence() {
                 size="lg"
                 className="mt-5 w-full"
                 disabled={concerns.length === 0}
-                onClick={() => {
-                  setStage("summary");
-                  track("decision_summary_viewed");
-                  speakSummary();
-                }}
+                onClick={proceedToSummary}
               >
                 See my decision summary &rarr;
               </Button>

@@ -3,7 +3,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "outline";
+type Variant = "primary" | "secondary" | "ghost" | "outline" | "gold";
 type Size = "md" | "lg" | "sm";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -19,6 +19,10 @@ const variantClasses: Record<Variant, string> = {
   outline:
     "bg-transparent border border-forest-800/20 text-forest-900 hover:bg-forest-800/5",
   ghost: "bg-transparent text-forest-800 hover:bg-forest-800/5",
+  // Bronze-gold CTA for dark, hero-style screens (see Screen01) where the
+  // default `primary` (a dark plum button) wouldn't stand out against an
+  // already-dark background.
+  gold: "bg-gold-500 text-forest-950 hover:bg-gold-400 active:bg-gold-600 shadow-card disabled:opacity-50",
 };
 
 const sizeClasses: Record<Size, string> = {

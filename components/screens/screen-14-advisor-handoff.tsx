@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 
 export function Screen14AdvisorHandoff() {
@@ -17,6 +18,12 @@ export function Screen14AdvisorHandoff() {
     speak("You're in great hands from here. I've shared everything we've covered with your advisor.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const connectAdvisor = () => {
+    track("advisor_handoff_clicked", { context: advisorContext });
+  };
+
+  useVoiceCommands([{ labels: ["connect", "connect me to an advisor", "yes", "talk to advisor"], action: connectAdvisor }]);
 
   const items = [
     { label: "Buyer profile", done: Boolean(advisorContext.buyerProfile.purpose) },
@@ -64,13 +71,7 @@ export function Screen14AdvisorHandoff() {
         </div>
 
         <div className="mt-auto space-y-3 pt-6">
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={() => {
-              track("advisor_handoff_clicked", { context: advisorContext });
-            }}
-          >
+          <Button size="lg" className="w-full" onClick={connectAdvisor}>
             <PhoneCall className="h-4 w-4" /> Connect me to an advisor &rarr;
           </Button>
           <button className="mx-auto flex items-center gap-1.5 text-sm font-medium text-forest-900/55 hover:text-forest-900">

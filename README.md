@@ -33,11 +33,17 @@ no dead ends:
 Also built:
 
 - **A persistent, always-on Aira** (`lib/aira-context.tsx` + `components/aira-panel.tsx`)
-  — one HeyGen LiveAvatar session for the whole journey, pinned at the top of every
-  screen (never torn down/reconnected between screens), with a live/connecting/fallback
-  status pill, a speaking-ring animation, and a caption line. Every screen just calls
-  `useAira().speak("...")` — Aira genuinely narrates the journey rather than sitting in
-  a one-off card per screen.
+  — one HeyGen LiveAvatar session for the whole journey (never torn down/reconnected
+  between screens), presented as a draggable vertical card the user can move anywhere
+  on screen, with a live/connecting/fallback status pill, a speaking-ring animation,
+  and a caption line. Every screen just calls `useAira().speak("...")` — Aira genuinely
+  narrates the journey rather than sitting in a one-off card per screen.
+- **Voice input** (`lib/voice-command-context.tsx`): tap the avatar card to talk (Web
+  Speech API — free, browser-native, no HeyGen credits involved). Every screen
+  registers what it can respond to — an option's label selects it, "continue"/"next"
+  advances, multi-select screens accept "done" to submit — so the whole 14-screen
+  journey is navigable by voice alone. Falls back invisibly (mic affordance hidden) in
+  browsers without speech recognition support (Safari, Firefox).
 - **A real chat-style buyer profile** (screen 2): a scrolling message thread with
   typing indicators and bubbles, not a step-by-step form — Aira asks, you tap a chip,
   your answer appears as a chat bubble, Aira "types" the next question.

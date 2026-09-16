@@ -6,6 +6,7 @@ import { Check, Loader2, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,8 @@ export function Screen08AccessUnlocked() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIdx]);
+
+  useVoiceCommands(done ? [{ labels: ["continue", "next", "find my pocket"], action: next }] : []);
 
   return (
     <div className="flex h-full flex-col items-center justify-center bg-ivory-100 px-6 text-center">

@@ -6,6 +6,7 @@ import { ScreenShell } from "@/components/screen-shell";
 import { ScarcityBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
+import { useVoiceCommands } from "@/lib/voice-command-context";
 import { POCKETS } from "@/lib/data";
 import { rankPockets, suitabilityTier } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
@@ -48,6 +49,13 @@ export function Screen10PocketMap() {
     track("pocket_viewed", { pocketId: id });
     goTo("pocket-detail");
   };
+
+  useVoiceCommands(
+    POCKETS.filter((p) => p.availability !== "sold").map((p) => ({
+      labels: [p.name],
+      action: () => handleSelect(p.id),
+    }))
+  );
 
   return (
     <ScreenShell showStages={false} title="Pocket map">
