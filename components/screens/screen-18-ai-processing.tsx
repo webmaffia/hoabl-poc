@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Briefcase, Wallet, MapPin, CalendarClock, Gauge, Square, TrendingUp } from "lucide-react";
+import { Briefcase, Wallet, TrendingUp } from "lucide-react";
 import { ScreenShell } from "@/components/screen-shell";
 import { AiGlobe } from "@/components/ai-processing/ai-globe";
 import { OrbitRings, RingConfig } from "@/components/ai-processing/orbit-rings";
@@ -15,14 +15,16 @@ import { cn } from "@/lib/utils";
 
 const CX = 160;
 const CY = 160;
-const LABEL_RADIUS = 112;
+const LABEL_RADIUS = 128;
 const ORBIT_DURATION = 90; // seconds per revolution — slow and continuous, all labels moving together
 
 // Decorative only — sized a little tighter than the label ring so they read
 // as an inner orbital backdrop rather than the thing carrying the labels.
+// Sized up a bit from the original 7-node version — with only 3 profile
+// nodes now, the wider rings keep the globe from feeling lost in empty space.
 const RINGS: RingConfig[] = [
-  { rx: 92, ry: 106, rotDeg: -18, opacity: 0.4, duration: 22, dotCount: 5 },
-  { rx: 108, ry: 84, rotDeg: 24, opacity: 0.32, duration: 28, reverse: true, dotCount: 5 },
+  { rx: 102, ry: 118, rotDeg: -18, opacity: 0.4, duration: 22, dotCount: 6 },
+  { rx: 120, ry: 94, rotDeg: 24, opacity: 0.32, duration: 28, reverse: true, dotCount: 6 },
 ];
 
 const STAGE_CAPTIONS = [
@@ -44,17 +46,7 @@ function capitalize(v: string | null) {
   return v ? v.charAt(0).toUpperCase() + v.slice(1) : "—";
 }
 
-function plotLabel(v: string | null) {
-  const map: Record<string, string> = {
-    corner: "Corner plot",
-    larger: "Larger plot",
-    interior: "Privacy / interior",
-    standard: "No strong pref.",
-  };
-  return v ? map[v] || v : "—";
-}
-
-const NODE_ORDER = ["purpose", "budget", "horizon", "location", "plot", "risk", "expected"];
+const NODE_ORDER = ["purpose", "budget", "expected"];
 
 export function Screen18AiProcessing() {
   const { buyerProfile, dispatch, next } = useJourney();
@@ -69,10 +61,6 @@ export function Screen18AiProcessing() {
     () => ({
       purpose: { key: "purpose", label: "Purpose", value: capitalize(buyerProfile.purpose), icon: Briefcase },
       budget: { key: "budget", label: "Budget", value: buyerProfile.budgetLabel || "—", icon: Wallet },
-      location: { key: "location", label: "Location", value: buyerProfile.location || "—", icon: MapPin },
-      horizon: { key: "horizon", label: "Horizon", value: buyerProfile.horizon || "—", icon: CalendarClock },
-      risk: { key: "risk", label: "Risk comfort", value: capitalize(buyerProfile.riskComfort), icon: Gauge },
-      plot: { key: "plot", label: "Plot preference", value: plotLabel(buyerProfile.plotPreference), icon: Square },
       expected: { key: "expected", label: "Usage", value: buyerProfile.expectedPurpose || "—", icon: TrendingUp },
     }),
     [buyerProfile]
@@ -114,7 +102,7 @@ export function Screen18AiProcessing() {
 
       if (cancelled) return;
       setStageIdx(3);
-      setActiveKey("plot");
+      setActiveKey("expected");
       await wait(1000);
 
       if (cancelled) return;
@@ -176,7 +164,7 @@ export function Screen18AiProcessing() {
             </p>
           </div>
 
-          {/* Orbiting label ring — outer div rotates all 7 nodes together
+          {/* Orbiting label ring — outer div rotates all 3 nodes together
               around (CX, CY); each node's own inner wrapper counter-rotates
               at the same rate so the pill text stays upright throughout. */}
           <div className="absolute left-0 top-0" style={{ left: CX, top: CY, width: 0, height: 0, zIndex: 40 }}>
@@ -184,6 +172,44 @@ export function Screen18AiProcessing() {
               className="absolute left-0 top-0"
               style={{ animation: `aira-label-orbit ${ORBIT_DURATION}s linear infinite` }}
             >
+              {/* Spokes connecting the globe to each node — with only 3 nodes
+                  spread wide around the ring, these read as the thing
+                  "linking" the profile answers to Aira's analysis, rather
+                  than leaving the extra space between them empty. */}
+              <svg
+                className="pointer-events-none absolute overflow-visible"
+                style={{ left: -LABEL_RADIUS, top: -LABEL_RADIUS, width: LABEL_RADIUS * 2, height: LABEL_RADIUS * 2 }}
+                viewBox={`${-LABEL_RADIUS} ${-LABEL_RADIUS} ${LABEL_RADIUS * 2} ${LABEL_RADIUS * 2}`}
+              >
+                <defs>
+                  <linearGradient id="spokeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#d4af5a" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor="#d4af5a" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {NODE_ORDER.map((key, i) => {
+                  const angle = -90 + i * (360 / NODE_ORDER.length);
+                  const rad = (angle * Math.PI) / 180;
+                  const x = Math.cos(rad) * LABEL_RADIUS;
+                  const y = Math.sin(rad) * LABEL_RADIUS;
+                  const lit = activeKey === key || doneKeys.includes(key);
+                  return (
+                    <line
+                      key={key}
+                      x1={0}
+                      y1={0}
+                      x2={x}
+                      y2={y}
+                      stroke="url(#spokeGradient)"
+                      strokeWidth={lit ? 1.25 : 0.75}
+                      strokeDasharray="2 5"
+                      opacity={lit ? 0.9 : 0.35}
+                      className="transition-opacity duration-500"
+                    />
+                  );
+                })}
+              </svg>
+
               {NODE_ORDER.map((key, i) => {
                 const angle = -90 + i * (360 / NODE_ORDER.length);
                 const rad = (angle * Math.PI) / 180;

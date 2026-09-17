@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, ShieldCheck, BadgeCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AiraVisual } from "@/components/aira-visual";
@@ -12,11 +12,40 @@ import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { HOABL_LOGO_URL } from "@/lib/brand";
+import { PROJECT, PROJECTS } from "@/lib/data";
 
-// Real HoABL photography (sampled from hoabl.com's own asset bucket) rather
-// than a stock/placeholder image — keeps the landing page visually on-brand.
-const HERO_IMAGE_URL =
-  "https://hoabl-bucket.s3.ap-south-1.amazonaws.com/Images_for_website_Hero_664x373_jpg_c1f8cf7c66.webp";
+// Real HoABL project photography (sampled from hoabl.com's own asset bucket,
+// same source as the rest of the app) cycling as a full-screen backdrop —
+// rather than one static hero image.
+const SLIDER_IMAGES = [PROJECT.heroImage!, ...PROJECTS.map((p) => p.image)];
+const SLIDE_DURATION_MS = 4500;
+
+function BackgroundSlider() {
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setIdx((i) => (i + 1) % SLIDER_IMAGES.length), SLIDE_DURATION_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <AnimatePresence>
+        <motion.img
+          key={SLIDER_IMAGES[idx]}
+          // eslint-disable-next-line @next/next/no-img-element
+          src={SLIDER_IMAGES[idx]}
+          alt=""
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.1, ease: "easeOut" }}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </AnimatePresence>
+    </div>
+  );
+}
 
 const BENEFITS = [
   "Understand the project clearly",
@@ -51,21 +80,15 @@ export function Screen01Welcome() {
   useVoiceCommands([{ labels: ["start", "start with aira", "begin", "let's start", "yes"], action: handleStart }]);
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-forest-950 text-ivory-100">
-      {/* A real photographic hero, like an actual landing page — Aira is a
+    <div className="relative flex h-full flex-col overflow-y-auto bg-forest-950 text-ivory-100">
+      {/* Full-screen, cycling project photography as the backdrop — Aira is a
           small live badge here rather than filling the whole frame, so this
           reads as "HoABL's site" first and "a video call" second. */}
-      <motion.div
-        initial={{ opacity: 0, scale: 1.04 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative h-[58%] min-h-[340px] w-full shrink-0 overflow-hidden"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={HERO_IMAGE_URL} alt="" className="h-full w-full object-cover" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/55 to-forest-950/10" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-forest-950/70 via-transparent to-transparent" />
+      <BackgroundSlider />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/70 to-forest-950/20" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-forest-950/70 via-transparent to-transparent" />
 
+      <div className="relative z-10 flex h-full flex-col">
         <div className="absolute inset-x-4 top-4 flex items-center justify-between">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -93,7 +116,7 @@ export function Screen01Welcome() {
           </div>
         </div>
 
-        <div className="absolute inset-x-4 bottom-4">
+        <div className="mt-auto px-5 pb-6 pt-16">
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300">
             Land for a better tomorrow
           </div>
@@ -116,37 +139,35 @@ export function Screen01Welcome() {
               </div>
             ))}
           </div>
-        </div>
-      </motion.div>
 
-      <div className="flex flex-1 flex-col px-5 pb-6 pt-5">
-        <motion.ul
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="space-y-3"
-        >
-          {BENEFITS.map((b) => (
-            <li key={b} className="flex items-center gap-2.5 text-[15px] text-ivory-100/85">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-400">
-                <Check className="h-3 w-3" />
-              </span>
-              {b}
-            </li>
-          ))}
-        </motion.ul>
+          <motion.ul
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="mt-5 space-y-3"
+          >
+            {BENEFITS.map((b) => (
+              <li key={b} className="flex items-center gap-2.5 text-[15px] text-ivory-100/85">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-400">
+                  <Check className="h-3 w-3" />
+                </span>
+                {b}
+              </li>
+            ))}
+          </motion.ul>
 
-        <div className="mt-auto pt-8">
-          <div className="mb-3 flex items-center justify-center gap-2">
-            <LiveViewerBadge seed="landing" className="bg-white/10 text-ivory-100/80" />
-            <span className="text-xs text-ivory-100/50">exploring HoABL land right now</span>
+          <div className="mt-6">
+            <div className="mb-3 flex items-center justify-center gap-2">
+              <LiveViewerBadge seed="landing" className="bg-white/10 text-ivory-100/80" />
+              <span className="text-xs text-ivory-100/50">exploring HoABL land right now</span>
+            </div>
+            <Button variant="gold" size="lg" className="w-full" onClick={handleStart}>
+              Start with Aira &rarr;
+            </Button>
+            <p className="mt-3 text-center text-xs text-ivory-100/45">
+              Takes ~2 minutes &middot; no commitment, just clarity.
+            </p>
           </div>
-          <Button variant="gold" size="lg" className="w-full" onClick={handleStart}>
-            Start with Aira &rarr;
-          </Button>
-          <p className="mt-3 text-center text-xs text-ivory-100/45">
-            Takes ~2 minutes &middot; no commitment, just clarity.
-          </p>
         </div>
       </div>
     </div>
