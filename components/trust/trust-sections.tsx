@@ -11,14 +11,16 @@ export function VerifiedInfo({ items }: { items: { label: string; value: string 
           Verified project information
         </span>
       </div>
-      <ul className="space-y-1.5">
-        {items.map((item) => (
-          <li key={item.label} className="flex items-center justify-between text-sm">
-            <span className="text-forest-900/60">{item.label}</span>
-            <span className="font-medium text-forest-900">{item.value}</span>
-          </li>
-        ))}
-      </ul>
+      <table className="w-full border-collapse text-[11px] leading-snug">
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.label} className="border-t border-forest-900/6 align-top first:border-0">
+              <td className="w-[34%] py-1.5 pr-2 text-forest-900/55">{item.label}</td>
+              <td className="py-1.5 font-medium text-forest-900">{item.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
