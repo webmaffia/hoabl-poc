@@ -154,9 +154,9 @@ export function Screen18AiProcessing() {
             <AiGlobe intensity={intensity} size={116} />
           </div>
 
-          {/* Center status overlay */}
+          {/* Center status overlay — must sit above the globe (z-20) */}
           <div
-            className="pointer-events-none absolute z-10 flex flex-col items-center gap-1.5 text-center"
+            className="pointer-events-none absolute z-30 flex flex-col items-center gap-1.5 text-center"
             style={{ left: CX, top: CY, transform: "translate(-50%, -50%)", width: 100 }}
           >
             <AnimatePresence mode="wait">
