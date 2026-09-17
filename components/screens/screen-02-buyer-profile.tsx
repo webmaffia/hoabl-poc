@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, VolumeX } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ScreenShell } from "@/components/screen-shell";
 import { AiraVisual } from "@/components/aira-visual";
@@ -140,7 +140,7 @@ interface Message {
 
 export function Screen02BuyerProfile() {
   const { next, dispatch, buyerProfile } = useJourney();
-  const { speak, isSpeaking, stopSpeaking } = useAira();
+  const { speak } = useAira();
   const { supported: voiceSupported } = useVoice();
   const [stepIdx, setStepIdx] = useState(0);
   const [selection, setSelection] = useState<string[]>([]);
@@ -247,16 +247,6 @@ export function Screen02BuyerProfile() {
             </div>
             <Progress value={progressPct} className="mt-1.5" />
           </div>
-          {isSpeaking && (
-            <button
-              type="button"
-              onClick={stopSpeaking}
-              aria-label="Stop Aira talking"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-forest-900/8 text-forest-900/60 hover:bg-forest-900/15"
-            >
-              <VolumeX className="h-4 w-4" />
-            </button>
-          )}
         </div>
 
         <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar pb-2">
