@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Sparkles } from "lucide-react";
+import { MapPin, Sparkles, ArrowRight } from "lucide-react";
 import { ScreenShell } from "@/components/screen-shell";
 import { LiveViewerBadge } from "@/components/urgency-badge";
+import { Button } from "@/components/ui/button";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
 import { PROJECT, PROJECTS, PROJECT_STARTING_PRICE, projectDemand } from "@/lib/data";
 import { rankProjects } from "@/lib/project-match";
 import { track } from "@/lib/analytics";
-import { cn, formatLakh } from "@/lib/utils";
-
-type Filter = "all" | "recommended";
+import { formatLakh } from "@/lib/utils";
 
 // One unified, browsable list built from real HoABL projects (same source
 // as lib/data.ts's PROJECT/PROJECTS — names, locations and images sourced
@@ -40,16 +39,13 @@ const BASE_LISTING = [
 export function Screen16SelectProject() {
   const { selectProject: setSelectedProject, goTo, buyerProfile } = useJourney();
   const { speak } = useAira();
-  const [filter, setFilter] = useState<Filter>("all");
 
   // Recommendation and score come from the same matching engine that just
   // ran on the AI-processing screen, not a hardcoded "always Aero Estate".
-  const scoreById = useMemo(() => {
-    const map = new Map<string, number>();
-    rankProjects(buyerProfile).forEach((r) => map.set(r.project.id, r.score));
-    return map;
-  }, [buyerProfile]);
-  const topId = useMemo(() => rankProjects(buyerProfile)[0]?.project.id, [buyerProfile]);
+  const ranked = useMemo(() => rankProjects(buyerProfile), [buyerProfile]);
+  const scoreById = useMemo(() => new Map(ranked.map((r) => [r.project.id, r.score])), [ranked]);
+  const topId = ranked[0]?.project.id;
+
   const LISTING = useMemo(
     () =>
       BASE_LISTING.map((p) => ({ ...p, recommended: p.id === topId, score: scoreById.get(p.id) ?? 0 })).sort(
@@ -57,19 +53,15 @@ export function Screen16SelectProject() {
       ),
     [topId, scoreById]
   );
-  const topProject = LISTING[0];
+  const featured = LISTING[0];
+  const others = LISTING.slice(1);
 
   useEffect(() => {
     speak(
-      `Based on what you told me, ${topProject.name} looks like the strongest match — but feel free to explore any of these.`
+      `Based on what you told me, ${featured.name} looks like the strongest match — but feel free to explore any of these.`
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const visible = useMemo(
-    () => (filter === "recommended" ? LISTING.filter((p) => p.recommended) : LISTING),
-    [filter, LISTING]
-  );
 
   const selectProject = (id: string) => {
     const item = LISTING.find((p) => p.id === id);
@@ -79,81 +71,89 @@ export function Screen16SelectProject() {
     goTo("project-match");
   };
 
-  useVoiceCommands([
-    { labels: ["all", "show all"], action: () => setFilter("all") },
-    { labels: ["recommended", "recommended for you"], action: () => setFilter("recommended") },
-    ...LISTING.map((p) => ({ labels: [p.name], action: () => selectProject(p.id) })),
-  ]);
+  useVoiceCommands(LISTING.map((p) => ({ labels: [p.name], action: () => selectProject(p.id) })));
 
   return (
     <ScreenShell showStages={false} title="Select a project">
-      <div className="flex h-full flex-col px-5 pb-5 pt-4">
+      <div className="flex h-full flex-col overflow-y-auto no-scrollbar px-5 pb-5 pt-4">
         <h1 className="font-serif text-2xl leading-tight text-forest-900">Choose where to explore</h1>
         <p className="mt-1 text-sm text-forest-900/50">All real HoABL projects — Aira has one matched to your profile.</p>
 
-        <div className="mt-3 flex gap-1.5 rounded-full bg-forest-900/5 p-1">
-          {(
-            [
-              ["all", "All projects"],
-              ["recommended", "Recommended for you"],
-            ] as [Filter, string][]
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              className={cn(
-                "flex-1 rounded-full py-1.5 text-xs font-medium transition-colors",
-                filter === value ? "bg-white text-forest-900 shadow-card" : "text-forest-900/45"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* Featured recommendation — deliberately much bigger than the rest */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => selectProject(featured.id)}
+          className="mt-4 block w-full shrink-0 overflow-hidden rounded-2xl border-2 border-gold-500 bg-white text-left shadow-elevated"
+        >
+          <div className="relative h-44 w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={featured.image} alt={featured.name} className="h-full w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/85 via-forest-950/15 to-transparent" />
+            <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-gold-500 px-2.5 py-1 text-[11px] font-bold text-forest-950 shadow-card">
+              <Sparkles className="h-3 w-3" /> Aira&rsquo;s top recommendation
+            </span>
+            {featured.illustrativePrice && (
+              <span className="absolute right-3 top-3 rounded-full bg-forest-950/70 px-2 py-0.5 text-[9px] font-medium text-ivory-100 backdrop-blur">
+                Demo pricing
+              </span>
+            )}
+            <div className="absolute inset-x-3 bottom-3">
+              <p className="font-serif text-2xl leading-tight text-ivory-50">{featured.name}</p>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-ivory-100/80">
+                <MapPin className="h-3 w-3 shrink-0" /> {featured.location}
+              </p>
+            </div>
+          </div>
+          <div className="p-4">
+            <p className="text-sm text-forest-900/65">{featured.description}</p>
+            <div className="mt-2.5 flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-forest-800/70">{featured.score}% profile fit</span>
+              <DemandSignal projectId={featured.id} />
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <p className="text-lg font-semibold text-gold-600">
+                From {featured.price}
+                {featured.illustrativePrice && (
+                  <span className="ml-1 text-[11px] font-normal text-forest-900/35">(illustrative)</span>
+                )}
+              </p>
+              <Button size="sm" className="shrink-0 gap-1">
+                Explore <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </motion.button>
 
-        <div className="mt-4 flex-1 space-y-3 overflow-y-auto no-scrollbar pb-2">
-          {visible.map((p, i) => (
+        {/* Everything else — compact list view, shown by default */}
+        <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-forest-900/40">
+          Other projects
+        </p>
+        <div className="flex-1 space-y-2 pb-2">
+          {others.map((p, i) => (
             <motion.button
               key={p.id}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04 }}
               onClick={() => selectProject(p.id)}
-              className={cn(
-                "block w-full overflow-hidden rounded-xl2 border bg-white text-left shadow-card transition-colors",
-                p.recommended ? "border-gold-500/50" : "border-forest-900/8"
-              )}
+              className="flex w-full items-center gap-3 rounded-xl border border-forest-900/8 bg-white p-2.5 text-left shadow-card"
             >
-              <div className="relative h-28 w-full">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/60 via-transparent to-transparent" />
-                {p.recommended && (
-                  <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-gold-500 px-2 py-0.5 text-[10px] font-semibold text-forest-950">
-                    <Sparkles className="h-2.5 w-2.5" /> Recommended
-                  </span>
-                )}
-                {p.illustrativePrice && (
-                  <span className="absolute right-2 top-2 rounded-full bg-forest-950/70 px-2 py-0.5 text-[9px] font-medium text-ivory-100 backdrop-blur">
-                    Demo pricing
-                  </span>
-                )}
               </div>
-              <div className="p-3.5">
-                <p className="text-sm font-semibold text-forest-900">{p.name}</p>
-                <p className="flex items-center gap-1 text-xs text-forest-900/50">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-forest-900">{p.name}</p>
+                <p className="flex items-center gap-1 truncate text-xs text-forest-900/50">
                   <MapPin className="h-3 w-3 shrink-0" /> {p.location}
                 </p>
-                <div className="mt-1.5 flex items-center justify-between gap-2">
-                  <p className="text-xs text-forest-900/60">{p.description}</p>
-                  <span className="shrink-0 text-[10px] font-semibold text-forest-800/70">{p.score}% profile fit</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-gold-600">
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-gold-600">
                     From {p.price}
-                    {p.illustrativePrice && <span className="ml-1 text-[10px] font-normal text-forest-900/35">(illustrative)</span>}
+                    {p.illustrativePrice && <span className="ml-1 font-normal text-forest-900/35">(illustrative)</span>}
                   </p>
-                  <DemandSignal projectId={p.id} />
+                  <span className="shrink-0 text-[10px] font-medium text-forest-800/60">{p.score}% fit</span>
                 </div>
               </div>
             </motion.button>
