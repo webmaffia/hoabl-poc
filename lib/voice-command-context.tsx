@@ -28,6 +28,13 @@ interface VoiceContextValue {
    */
   mode: InteractionMode;
   setMode: (mode: InteractionMode) => void;
+  /**
+   * Whether Aira's avatar is shown expanded, in the same bottom-half split
+   * used by chat (see app/page.tsx) rather than as a full-screen overlay.
+   * Lives here so both the CTA bar and the floating widget can read/set it.
+   */
+  avatarExpanded: boolean;
+  setAvatarExpanded: (expanded: boolean) => void;
 }
 
 const VoiceContext = createContext<VoiceContextValue | null>(null);
@@ -54,6 +61,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
   const [heard, setHeard] = useState<string | null>(null);
   const [supported, setSupported] = useState(false);
   const [mode, setMode] = useState<InteractionMode>("talk");
+  const [avatarExpanded, setAvatarExpanded] = useState(false);
 
   const recognitionRef = useRef<any>(null);
   const commandsRef = useRef<VoiceCommand[]>([]);
@@ -137,7 +145,18 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
 
   return (
     <VoiceContext.Provider
-      value={{ supported, listening, heard, toggleListening, submitText, registerCommands, mode, setMode }}
+      value={{
+        supported,
+        listening,
+        heard,
+        toggleListening,
+        submitText,
+        registerCommands,
+        mode,
+        setMode,
+        avatarExpanded,
+        setAvatarExpanded,
+      }}
     >
       {children}
     </VoiceContext.Provider>

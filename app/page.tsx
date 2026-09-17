@@ -7,6 +7,7 @@ import { VoiceCommandProvider, useVoice } from "@/lib/voice-command-context";
 import { DeviceFrame } from "@/components/device-frame";
 import { AiraPanel } from "@/components/aira-panel";
 import { AiraChatDock } from "@/components/aira-chat-dock";
+import { AiraExpandedPanel } from "@/components/aira-expanded-panel";
 import { AiraCtaBar } from "@/components/aira-cta-bar";
 import { DemoControls } from "@/components/demo-controls";
 import { cn } from "@/lib/utils";
@@ -48,19 +49,21 @@ const SCREEN_COMPONENTS = {
 
 function JourneyScreen() {
   const { currentScreen } = useJourney();
-  const { mode } = useVoice();
+  const { mode, avatarExpanded } = useVoice();
   const Screen = SCREEN_COMPONENTS[currentScreen];
   // Screen 1 already has Aira as a full-width hero (see Screen01Welcome) —
   // the floating draggable widget and mic/chat bar would be redundant
   // clutter over it, so they only appear from screen 2 onward.
   const showAiraControls = currentScreen !== "welcome";
   // "talk" (Aira full-screen) is the default everywhere Aira controls show;
-  // the 50/50 chat split is only entered when the user explicitly opts in.
-  const splitForChat = showAiraControls && mode === "chat";
+  // chat and the expanded avatar both use the same 50/50 bottom-half split,
+  // entered only when the user explicitly opts in (typing, or tapping to
+  // expand the avatar / starting to talk).
+  const splitBottom = !showAiraControls ? null : mode === "chat" ? "chat" : avatarExpanded ? "avatar" : null;
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className={cn("relative w-full overflow-hidden transition-[height] duration-300", splitForChat ? "h-1/2" : "h-full")}>
+      <div className={cn("relative w-full overflow-hidden transition-[height] duration-300", splitBottom ? "h-1/2" : "h-full")}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentScreen}
@@ -82,9 +85,9 @@ function JourneyScreen() {
         )}
       </div>
 
-      {splitForChat && (
+      {splitBottom && (
         <div className="h-1/2 w-full">
-          <AiraChatDock />
+          {splitBottom === "chat" ? <AiraChatDock /> : <AiraExpandedPanel />}
         </div>
       )}
     </div>
