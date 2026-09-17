@@ -171,6 +171,9 @@ export function Screen18AiProcessing() {
               </motion.p>
             </AnimatePresence>
             <span className="h-px w-5 bg-gold-400/70" />
+            <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-gold-300/80">
+              Aira analyzing&hellip;
+            </p>
           </div>
 
           {/* Orbiting label ring — outer div rotates all 7 nodes together
