@@ -17,6 +17,10 @@ interface VoiceContextValue {
   /** The most recent thing the user said (by voice or typed chat), for on-screen feedback. */
   heard: string | null;
   toggleListening: () => void;
+  /** Proactively triggers the browser's mic permission prompt (e.g. on the
+   * welcome screen) so it's already granted by the time the user taps "Talk
+   * to Aira" later, instead of interrupting them mid-flow. */
+  requestMicPermission: () => void;
   /** Feed typed chat text through the same matching engine voice recognition uses. */
   submitText: (text: string) => void;
   /** Screens call this (via useVoiceCommands) to register what they can respond to while mounted. */
@@ -143,6 +147,16 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
     [handleTranscript]
   );
 
+  const requestMicPermission = useCallback(() => {
+    if (!navigator.mediaDevices?.getUserMedia) return;
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => stream.getTracks().forEach((t) => t.stop()))
+      .catch(() => {
+        /* denied or unavailable — voice features just stay unavailable until granted */
+      });
+  }, []);
+
   return (
     <VoiceContext.Provider
       value={{
@@ -150,6 +164,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
         listening,
         heard,
         toggleListening,
+        requestMicPermission,
         submitText,
         registerCommands,
         mode,

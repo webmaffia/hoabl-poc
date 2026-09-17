@@ -8,7 +8,7 @@ import { AiraVisual } from "@/components/aira-visual";
 import { LiveViewerBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
-import { useVoiceCommands } from "@/lib/voice-command-context";
+import { useVoice, useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { HOABL_LOGO_URL } from "@/lib/brand";
@@ -63,11 +63,16 @@ const TRUST_BADGES = [
 export function Screen01Welcome() {
   const { next } = useJourney();
   const { speak, status, isSpeaking } = useAira();
+  const { requestMicPermission } = useVoice();
 
   useEffect(() => {
     speak(
       "I'll understand what you're looking for, explore the relevant project with you, and help you evaluate the right pocket."
     );
+    // Ask for mic access up front — by the time the user reaches a screen
+    // with voice commands, the browser prompt is already resolved instead of
+    // interrupting them mid-flow.
+    requestMicPermission();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
