@@ -24,6 +24,10 @@ import { cn } from "@/lib/utils";
 import { PROJECT } from "@/lib/data";
 import { Project } from "@/lib/types";
 
+// Real project footage, saved locally at public/aero.mp4 — only Aero Estate
+// has a video; every other project falls back to its hero photo.
+const AERO_VIDEO_URL = "/aero.mp4";
+
 type Accent = "forest" | "gold";
 
 interface Section {
@@ -185,8 +189,20 @@ export function Screen05ProjectWalkthrough() {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="relative h-40 w-full shrink-0 overflow-hidden"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={selectedProject.heroImage} alt={selectedProject.name} className="h-full w-full object-cover" />
+            {selectedProject.id === PROJECT.id ? (
+              <video
+                src={AERO_VIDEO_URL}
+                poster={selectedProject.heroImage}
+                className="h-full w-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={selectedProject.heroImage} alt={selectedProject.name} className="h-full w-full object-cover" />
+            )}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/45 to-transparent" />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-forest-950/50 to-transparent" />
             <div className="absolute inset-x-4 bottom-3">
