@@ -11,6 +11,8 @@ export type AnalyticsEvent =
   | "profile_completed"
   | "project_recommended"
   | "project_selected"
+  | "ai_processing_started"
+  | "ai_processing_completed"
   | "project_walkthrough_started"
   | "project_walkthrough_completed"
   | "token_cta_clicked"

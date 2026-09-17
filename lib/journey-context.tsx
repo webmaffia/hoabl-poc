@@ -17,6 +17,10 @@ export const SCREEN_ORDER = [
   "welcome",
   "buyer-profile",
   "profile-summary",
+  // A cinematic "Aira is thinking" moment between profile completion and
+  // the project list — visually communicates the matching engine actually
+  // running, rather than jumping straight to a static list.
+  "ai-processing",
   // Right after the profile is built — a real, browsable list of HoABL
   // projects, with the one matched to the buyer's profile highlighted.
   "select-project",

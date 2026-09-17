@@ -9,7 +9,7 @@ import { HOABL_LOGO_URL } from "@/lib/brand";
 const STAGES: { label: string; screens: ScreenId[] }[] = [
   {
     label: "Understanding",
-    screens: ["welcome", "buyer-profile", "profile-summary", "select-project", "project-match", "project-walkthrough"],
+    screens: ["welcome", "buyer-profile", "profile-summary", "ai-processing", "select-project", "project-match", "project-walkthrough"],
   },
   {
     label: "Selection",

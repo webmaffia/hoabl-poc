@@ -11,6 +11,7 @@ import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { PROJECT, PROJECTS } from "@/lib/data";
+import { topProjectMatch } from "@/lib/project-match";
 import { cn } from "@/lib/utils";
 
 // The full "why this fits you" breakdown now lives entirely in the
@@ -21,10 +22,11 @@ import { cn } from "@/lib/utils";
 const FIT_SUMMARY = "Budget, horizon, location and plot preferences all line up with what you told Aira.";
 
 export function Screen04ProjectMatch() {
-  const { next, selectedProject, selectProject } = useJourney();
+  const { next, selectedProject, selectProject, buyerProfile } = useJourney();
   const { speak } = useAira();
   const [showOthers, setShowOthers] = useState(false);
-  const isRecommended = selectedProject.id === PROJECT.id;
+  const match = topProjectMatch(buyerProfile);
+  const isRecommended = selectedProject.id === match.project.id;
 
   useEffect(() => {
     speak(

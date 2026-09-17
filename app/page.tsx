@@ -25,6 +25,7 @@ import { Screen13DecisionConfidence } from "@/components/screens/screen-13-decis
 import { Screen14AdvisorHandoff } from "@/components/screens/screen-14-advisor-handoff";
 import { Screen15IdentityCapture } from "@/components/screens/screen-15-identity-capture";
 import { Screen16SelectProject } from "@/components/screens/screen-16-select-project";
+import { Screen18AiProcessing } from "@/components/screens/screen-18-ai-processing";
 
 const SCREEN_COMPONENTS = {
   welcome: Screen01Welcome,
@@ -42,6 +43,7 @@ const SCREEN_COMPONENTS = {
   "advisor-handoff": Screen14AdvisorHandoff,
   "identity-capture": Screen15IdentityCapture,
   "select-project": Screen16SelectProject,
+  "ai-processing": Screen18AiProcessing,
 } as const;
 
 function JourneyScreen() {

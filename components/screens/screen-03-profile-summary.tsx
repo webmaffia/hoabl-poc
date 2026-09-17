@@ -81,7 +81,7 @@ export function Screen03ProfileSummary() {
 
         <div className="mt-6 space-y-3">
           <Button size="lg" className="w-full" onClick={proceed}>
-            Explore matched projects &rarr;
+            Find my suitable project &rarr;
           </Button>
           <button
             onClick={() => goTo("buyer-profile")}

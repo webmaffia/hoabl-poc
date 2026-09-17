@@ -9,6 +9,7 @@ import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
 import { PROJECT, PROJECTS, PROJECT_STARTING_PRICE, projectDemand } from "@/lib/data";
+import { rankProjects } from "@/lib/project-match";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ type Filter = "all" | "recommended";
 // from hoabl.com). Every card continues the same interactive journey —
 // Aero Estate's starting price is real (from hoabl.com), the other 5 are
 // illustrative demo pricing (HoABL doesn't publish it), shown as such.
-const LISTING = [
+const BASE_LISTING = [
   {
     id: PROJECT.id,
     name: PROJECT.name,
@@ -28,31 +29,46 @@ const LISTING = [
     image: PROJECT.heroImage!,
     price: formatLakh(PROJECT_STARTING_PRICE[PROJECT.id]),
     illustrativePrice: false,
-    recommended: true,
   },
   ...PROJECTS.map((p) => ({
     ...p,
     price: formatLakh(PROJECT_STARTING_PRICE[p.id]),
     illustrativePrice: true,
-    recommended: false,
   })),
 ];
 
 export function Screen16SelectProject() {
-  const { selectProject: setSelectedProject, goTo } = useJourney();
+  const { selectProject: setSelectedProject, goTo, buyerProfile } = useJourney();
   const { speak } = useAira();
   const [filter, setFilter] = useState<Filter>("all");
 
+  // Recommendation and score come from the same matching engine that just
+  // ran on the AI-processing screen, not a hardcoded "always Aero Estate".
+  const scoreById = useMemo(() => {
+    const map = new Map<string, number>();
+    rankProjects(buyerProfile).forEach((r) => map.set(r.project.id, r.score));
+    return map;
+  }, [buyerProfile]);
+  const topId = useMemo(() => rankProjects(buyerProfile)[0]?.project.id, [buyerProfile]);
+  const LISTING = useMemo(
+    () =>
+      BASE_LISTING.map((p) => ({ ...p, recommended: p.id === topId, score: scoreById.get(p.id) ?? 0 })).sort(
+        (a, b) => b.score - a.score
+      ),
+    [topId, scoreById]
+  );
+  const topProject = LISTING[0];
+
   useEffect(() => {
     speak(
-      `Based on what you told me, ${PROJECT.name} looks like the strongest match — but feel free to explore any of these.`
+      `Based on what you told me, ${topProject.name} looks like the strongest match — but feel free to explore any of these.`
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const visible = useMemo(
     () => (filter === "recommended" ? LISTING.filter((p) => p.recommended) : LISTING),
-    [filter]
+    [filter, LISTING]
   );
 
   const selectProject = (id: string) => {
@@ -128,7 +144,10 @@ export function Screen16SelectProject() {
                 <p className="flex items-center gap-1 text-xs text-forest-900/50">
                   <MapPin className="h-3 w-3 shrink-0" /> {p.location}
                 </p>
-                <p className="mt-1.5 text-xs text-forest-900/60">{p.description}</p>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <p className="text-xs text-forest-900/60">{p.description}</p>
+                  <span className="shrink-0 text-[10px] font-semibold text-forest-800/70">{p.score}% profile fit</span>
+                </div>
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-gold-600">
                     From {p.price}
