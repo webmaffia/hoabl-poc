@@ -15,11 +15,13 @@ const LIGHTS = Array.from({ length: 16 }, (_, i) => {
   };
 });
 
-export function AiGlobe({ intensity = 0 }: { intensity?: number }) {
+export function AiGlobe({ intensity = 0, size = 160 }: { intensity?: number; size?: number }) {
   return (
     <div
-      className="relative h-40 w-40 shrink-0 rounded-full"
+      className="relative shrink-0 rounded-full"
       style={{
+        width: size,
+        height: size,
         background: `
           radial-gradient(circle at 32% 26%, rgba(255,255,255,0.22), transparent 32%),
           radial-gradient(circle at 62% 72%, rgba(212,175,90,0.22), transparent 42%),

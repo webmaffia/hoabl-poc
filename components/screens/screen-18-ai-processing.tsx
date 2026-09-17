@@ -6,19 +6,23 @@ import { Briefcase, Wallet, MapPin, CalendarClock, Gauge, Square, TrendingUp } f
 import { ScreenShell } from "@/components/screen-shell";
 import { AiGlobe } from "@/components/ai-processing/ai-globe";
 import { OrbitRings, RingConfig } from "@/components/ai-processing/orbit-rings";
-import { ProfileNode, RingDot, ProfileNodeData } from "@/components/ai-processing/profile-node";
-import { ellipsePoint } from "@/lib/orbit-geometry";
+import { ProfileNode, ProfileNodeData } from "@/components/ai-processing/profile-node";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { topProjectMatch } from "@/lib/project-match";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
-const CX = 140;
-const CY = 145;
+const CX = 160;
+const CY = 160;
+const LABEL_RADIUS = 112;
+const ORBIT_DURATION = 90; // seconds per revolution — slow and continuous, all labels moving together
+
+// Decorative only — sized a little tighter than the label ring so they read
+// as an inner orbital backdrop rather than the thing carrying the labels.
 const RINGS: RingConfig[] = [
-  { rx: 106, ry: 122, rotDeg: -18, opacity: 0.4, duration: 24, dotCount: 5 },
-  { rx: 126, ry: 98, rotDeg: 24, opacity: 0.32, duration: 30, reverse: true, dotCount: 5 },
+  { rx: 92, ry: 106, rotDeg: -18, opacity: 0.4, duration: 22, dotCount: 5 },
+  { rx: 108, ry: 84, rotDeg: 24, opacity: 0.32, duration: 28, reverse: true, dotCount: 5 },
 ];
 
 const STAGE_CAPTIONS = [
@@ -50,18 +54,7 @@ function plotLabel(v: string | null) {
   return v ? map[v] || v : "—";
 }
 
-// Anchors each node to one of the two rings at a fixed angle. Only the
-// active node ever renders its full labeled pill — the rest stay as plain
-// dots — so the globe never shows more than one label at a time.
-const NODE_ANCHORS: { key: string; ring: 0 | 1; angle: number }[] = [
-  { key: "purpose", ring: 0, angle: -100 },
-  { key: "budget", ring: 1, angle: -45 },
-  { key: "horizon", ring: 0, angle: 8 },
-  { key: "location", ring: 1, angle: 58 },
-  { key: "plot", ring: 0, angle: 115 },
-  { key: "risk", ring: 1, angle: 165 },
-  { key: "expected", ring: 0, angle: -155 },
-];
+const NODE_ORDER = ["purpose", "budget", "horizon", "location", "plot", "risk", "expected"];
 
 export function Screen18AiProcessing() {
   const { buyerProfile, dispatch, next } = useJourney();
@@ -72,19 +65,18 @@ export function Screen18AiProcessing() {
   const [intensity, setIntensity] = useState(0);
   const stepIdx = stageIdx < 2 ? 0 : stageIdx < 4 ? 1 : 2;
 
-  const nodes: ProfileNodeData[] = useMemo(
-    () => [
-      { key: "purpose", label: "Purpose", value: capitalize(buyerProfile.purpose), icon: Briefcase },
-      { key: "budget", label: "Budget", value: buyerProfile.budgetLabel || "—", icon: Wallet },
-      { key: "location", label: "Location", value: buyerProfile.location || "—", icon: MapPin },
-      { key: "horizon", label: "Horizon", value: buyerProfile.horizon || "—", icon: CalendarClock },
-      { key: "risk", label: "Risk comfort", value: capitalize(buyerProfile.riskComfort), icon: Gauge },
-      { key: "plot", label: "Plot preference", value: plotLabel(buyerProfile.plotPreference), icon: Square },
-      { key: "expected", label: "Usage", value: buyerProfile.expectedPurpose || "—", icon: TrendingUp },
-    ],
+  const nodesByKey: Record<string, ProfileNodeData> = useMemo(
+    () => ({
+      purpose: { key: "purpose", label: "Purpose", value: capitalize(buyerProfile.purpose), icon: Briefcase },
+      budget: { key: "budget", label: "Budget", value: buyerProfile.budgetLabel || "—", icon: Wallet },
+      location: { key: "location", label: "Location", value: buyerProfile.location || "—", icon: MapPin },
+      horizon: { key: "horizon", label: "Horizon", value: buyerProfile.horizon || "—", icon: CalendarClock },
+      risk: { key: "risk", label: "Risk comfort", value: capitalize(buyerProfile.riskComfort), icon: Gauge },
+      plot: { key: "plot", label: "Plot preference", value: plotLabel(buyerProfile.plotPreference), icon: Square },
+      expected: { key: "expected", label: "Usage", value: buyerProfile.expectedPurpose || "—", icon: TrendingUp },
+    }),
     [buyerProfile]
   );
-  const nodesByKey = useMemo(() => Object.fromEntries(nodes.map((n) => [n.key, n])), [nodes]);
 
   // Computed once, up front — the "processing" is a visual performance of
   // work that's actually instant; the score itself is real and deterministic.
@@ -98,11 +90,11 @@ export function Screen18AiProcessing() {
       setStageIdx(0);
       speak("Give me a moment while I match your profile against HoABL's projects.");
 
-      for (let i = 0; i < NODE_ANCHORS.length; i++) {
+      for (let i = 0; i < NODE_ORDER.length; i++) {
         if (cancelled) return;
         await wait(320);
         if (cancelled) return;
-        const key = NODE_ANCHORS[i].key;
+        const key = NODE_ORDER[i];
         setActiveKey(key);
         setDoneKeys((prev) => [...prev, key]);
       }
@@ -152,20 +144,20 @@ export function Screen18AiProcessing() {
   return (
     <ScreenShell showBack={false} showStages={false} title="AI matching">
       <div
-        className="relative flex h-full flex-col items-center justify-center gap-6 overflow-y-auto no-scrollbar px-6 py-6"
+        className="relative flex h-full flex-col items-center justify-center gap-6 overflow-y-auto no-scrollbar px-4 py-6"
         style={{ background: "radial-gradient(ellipse at 50% 30%, #1c0f30 0%, #100819 55%, #0a0512 100%)" }}
       >
-        {/* Globe + orbit rings + profile nodes */}
-        <div className="relative mx-auto h-[280px] w-full max-w-[280px] shrink-0">
+        {/* Globe + orbit rings + all 7 profile labels, slowly orbiting together */}
+        <div className="relative mx-auto h-[320px] w-[320px] shrink-0">
           <OrbitRings cx={CX} cy={CY} rings={RINGS} />
           <div className="absolute z-20" style={{ left: CX, top: CY, transform: "translate(-50%, -50%)" }}>
-            <AiGlobe intensity={intensity} />
+            <AiGlobe intensity={intensity} size={116} />
           </div>
 
           {/* Center status overlay */}
           <div
             className="pointer-events-none absolute z-10 flex flex-col items-center gap-1.5 text-center"
-            style={{ left: CX, top: CY, transform: "translate(-50%, -50%)", width: 130 }}
+            style={{ left: CX, top: CY, transform: "translate(-50%, -50%)", width: 100 }}
           >
             <AnimatePresence mode="wait">
               <motion.p
@@ -173,7 +165,7 @@ export function Screen18AiProcessing() {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="font-serif text-sm leading-tight text-ivory-50"
+                className="font-serif text-[13px] leading-tight text-ivory-50"
               >
                 {STEPS[stepIdx]}
               </motion.p>
@@ -181,27 +173,39 @@ export function Screen18AiProcessing() {
             <span className="h-px w-5 bg-gold-400/70" />
           </div>
 
-          {NODE_ANCHORS.map((anchor) => {
-            const ring = RINGS[anchor.ring];
-            const p = ellipsePoint(CX, CY, ring.rx, ring.ry, ring.rotDeg, anchor.angle);
-            const node = nodesByKey[anchor.key];
-            if (!node) return null;
-            const isActive = activeKey === anchor.key;
-            return isActive ? (
-              <ProfileNode
-                key={anchor.key}
-                data={node}
-                x={p.x}
-                y={p.y}
-                align={p.x < CX ? "left" : "right"}
-                active
-                done={doneKeys.includes(anchor.key)}
-                delay={0}
-              />
-            ) : (
-              <RingDot key={anchor.key} x={p.x} y={p.y} done={doneKeys.includes(anchor.key)} />
-            );
-          })}
+          {/* Orbiting label ring — outer div rotates all 7 nodes together
+              around (CX, CY); each node's own inner wrapper counter-rotates
+              at the same rate so the pill text stays upright throughout. */}
+          <div className="absolute left-0 top-0" style={{ left: CX, top: CY, width: 0, height: 0, zIndex: 40 }}>
+            <div
+              className="absolute left-0 top-0"
+              style={{ animation: `aira-label-orbit ${ORBIT_DURATION}s linear infinite` }}
+            >
+              {NODE_ORDER.map((key, i) => {
+                const angle = -90 + i * (360 / NODE_ORDER.length);
+                const rad = (angle * Math.PI) / 180;
+                const x = Math.cos(rad) * LABEL_RADIUS;
+                const y = Math.sin(rad) * LABEL_RADIUS;
+                const node = nodesByKey[key];
+                if (!node) return null;
+                return (
+                  <div
+                    key={key}
+                    className="absolute left-0 top-0"
+                    style={{ transform: `translate(${x}px, ${y}px)` }}
+                  >
+                    <div
+                      style={{
+                        animation: `aira-label-counter-orbit ${ORBIT_DURATION}s linear infinite`,
+                      }}
+                    >
+                      <ProfileNode data={node} active={activeKey === key} done={doneKeys.includes(key)} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Stage caption + progress */}
@@ -231,6 +235,25 @@ export function Screen18AiProcessing() {
           </div>
           <p className="mt-3 text-[11px] text-ivory-100/35">This may take a few seconds&hellip;</p>
         </div>
+
+        <style jsx global>{`
+          @keyframes aira-label-orbit {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+          @keyframes aira-label-counter-orbit {
+            from {
+              transform: translate(-50%, -50%) rotate(0deg);
+            }
+            to {
+              transform: translate(-50%, -50%) rotate(-360deg);
+            }
+          }
+        `}</style>
       </div>
     </ScreenShell>
   );

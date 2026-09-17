@@ -1,7 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ProfileNodeData {
@@ -11,74 +9,38 @@ export interface ProfileNodeData {
   icon: React.ElementType;
 }
 
-/** A plain marker for a node that isn't currently active — keeps the ring
- * from being cluttered with 7 text labels at once; only the active node
- * expands into a full labeled pill. */
-export function RingDot({ x, y, done }: { x: number; y: number; done: boolean }) {
+/**
+ * A compact, always-visible label for one buyer-profile answer. Kept small
+ * and consistently laid out (icon-then-text, never mirrored) because these
+ * nodes continuously orbit — a fixed left/right text alignment would only
+ * look right for half of each rotation.
+ */
+export function ProfileNode({ data, active, done }: { data: ProfileNodeData; active: boolean; done: boolean }) {
   return (
-    <span
+    <div
       className={cn(
-        "absolute z-30 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border transition-colors duration-300",
-        done ? "border-gold-300 bg-gold-400" : "border-white/25 bg-white/10"
+        "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 backdrop-blur-sm transition-all duration-300",
+        active
+          ? "scale-105 border-gold-300 bg-gold-500/20 shadow-[0_0_16px_2px_rgba(212,175,90,0.45)]"
+          : done
+          ? "border-gold-400/25 bg-forest-950/75"
+          : "border-white/10 bg-forest-950/60"
       )}
-      style={{ left: x, top: y, boxShadow: done ? "0 0 6px 2px rgba(212,175,90,0.55)" : "none" }}
-    />
-  );
-}
-
-export function ProfileNode({
-  data,
-  x,
-  y,
-  align,
-  active,
-  done,
-  delay,
-}: {
-  data: ProfileNodeData;
-  x: number;
-  y: number;
-  align: "left" | "right";
-  active: boolean;
-  done: boolean;
-  delay: number;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay, type: "spring", stiffness: 240, damping: 20 }}
-      className="absolute z-40"
-      style={{
-        left: x,
-        top: y,
-        transform: `translate(${align === "left" ? "-100%" : "0%"}, -50%)`,
-      }}
     >
-      <div
+      <span
         className={cn(
-          "flex items-center gap-2 whitespace-nowrap rounded-full border px-2.5 py-1.5 backdrop-blur-sm transition-colors duration-300",
-          align === "left" && "flex-row-reverse",
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
           active
-            ? "border-gold-300 bg-gold-500/20 shadow-[0_0_18px_2px_rgba(212,175,90,0.4)]"
-            : done
-            ? "border-gold-400/25 bg-forest-950/70"
-            : "border-white/10 bg-forest-950/60"
+            ? "bg-gradient-to-br from-gold-300 to-gold-500 text-forest-950"
+            : "bg-gradient-to-br from-white/15 to-white/5 text-gold-200"
         )}
       >
-        <span
-          className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border",
-            active ? "border-gold-300 bg-gold-400 text-forest-950" : "border-gold-400/30 bg-white/5 text-gold-200"
-          )}
-        >
-          {done && !active ? <Check className="h-3 w-3" /> : <data.icon className="h-3 w-3" />}
-        </span>
-        <span className={cn("flex flex-col leading-tight", align === "left" && "items-end text-right")}>
-          <span className="text-[8px] font-semibold uppercase tracking-wide text-ivory-100/45">{data.label}</span>
-          <span className="text-[11px] font-medium text-ivory-50">{data.value}</span>
-        </span>
-      </div>
-    </motion.div>
+        <data.icon className="h-2.5 w-2.5" />
+      </span>
+      <span className="flex flex-col leading-tight">
+        <span className="text-[7px] font-semibold uppercase tracking-wide text-ivory-100/45">{data.label}</span>
+        <span className="text-[10px] font-medium text-ivory-50">{data.value}</span>
+      </span>
+    </div>
   );
 }
