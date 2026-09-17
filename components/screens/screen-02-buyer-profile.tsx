@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, VolumeX } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ScreenShell } from "@/components/screen-shell";
 import { AiraVisual } from "@/components/aira-visual";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
-import { useVoiceCommands } from "@/lib/voice-command-context";
+import { useVoice, useVoiceCommands } from "@/lib/voice-command-context";
 import { questionWithOptions } from "@/lib/speech";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -140,7 +140,8 @@ interface Message {
 
 export function Screen02BuyerProfile() {
   const { next, dispatch, buyerProfile } = useJourney();
-  const { speak } = useAira();
+  const { speak, isSpeaking, stopSpeaking } = useAira();
+  const { supported: voiceSupported } = useVoice();
   const [stepIdx, setStepIdx] = useState(0);
   const [selection, setSelection] = useState<string[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -246,6 +247,16 @@ export function Screen02BuyerProfile() {
             </div>
             <Progress value={progressPct} className="mt-1.5" />
           </div>
+          {isSpeaking && (
+            <button
+              type="button"
+              onClick={stopSpeaking}
+              aria-label="Stop Aira talking"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-forest-900/8 text-forest-900/60 hover:bg-forest-900/15"
+            >
+              <VolumeX className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar pb-2">
@@ -324,6 +335,11 @@ export function Screen02BuyerProfile() {
                 );
               })}
             </div>
+            {voiceSupported && (
+              <p className="text-center text-[11px] text-forest-900/35">
+                Or tap &ldquo;Talk to Aira&rdquo; below and just say your answer
+              </p>
+            )}
             {step.multi && (
               <p className="text-xs text-forest-900/40">
                 {selection.length}/{step.maxSelect} selected

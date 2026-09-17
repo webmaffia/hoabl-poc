@@ -14,6 +14,10 @@ interface AiraContextValue {
   /** Unregister a previously-attached element (call on unmount). */
   detachVideo: (el: HTMLVideoElement | null) => void;
   speak: (text: string) => void;
+  /** Cuts off whatever Aira is currently saying — used both when a new
+   * line needs to start immediately (so she never lags behind the screen
+   * the user has already moved on to) and by an explicit "stop" control. */
+  stopSpeaking: () => void;
 }
 
 const AiraContext = createContext<AiraContextValue | null>(null);
@@ -152,6 +156,22 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
     if (el) elementsRef.current.delete(el);
   }, []);
 
+  const stopSpeaking = useCallback(() => {
+    if (speakTimerRef.current) {
+      clearTimeout(speakTimerRef.current);
+      speakTimerRef.current = null;
+    }
+    pendingSpeechRef.current = null;
+    setIsSpeaking(false);
+    if (sessionRef.current) {
+      try {
+        sessionRef.current.interrupt();
+      } catch {
+        /* nothing more we can do here */
+      }
+    }
+  }, []);
+
   const speak = useCallback(
     (text: string) => {
       setCaption(text);
@@ -159,6 +179,12 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
 
       if (status === "live" && sessionRef.current) {
         try {
+          // HeyGen queues repeat() calls rather than replacing the current
+          // line — without interrupting first, answering a question before
+          // Aira finishes the previous one queues both up, so she keeps
+          // talking about an earlier question after the user has already
+          // moved on. Interrupting first keeps her in sync with the screen.
+          sessionRef.current.interrupt();
           sessionRef.current.repeat(text);
         } catch {
           /* live speak failed — caption still updated above */
@@ -181,7 +207,7 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AiraContext.Provider value={{ status, caption, isSpeaking, attachVideo, detachVideo, speak }}>
+    <AiraContext.Provider value={{ status, caption, isSpeaking, attachVideo, detachVideo, speak, stopSpeaking }}>
       {children}
     </AiraContext.Provider>
   );
