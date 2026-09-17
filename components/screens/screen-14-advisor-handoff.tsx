@@ -29,10 +29,8 @@ export function Screen14AdvisorHandoff() {
     { label: "Buyer profile", done: Boolean(advisorContext.buyerProfile.purpose) },
     { label: "Project viewed", done: Boolean(advisorContext.projectViewed) },
     { label: "Pockets viewed & shortlisted", done: advisorContext.pocketsViewed.length > 0 },
-    { label: "Comparison history", done: advisorContext.comparedPockets.length > 0 },
     { label: "KYC verified", done: advisorContext.kycStatus === "verified" },
     { label: "Token payment completed", done: advisorContext.tokenPaymentStatus === "completed" },
-    { label: "Current decision stage", done: Boolean(advisorContext.confidenceLevel) },
   ];
 
   return (

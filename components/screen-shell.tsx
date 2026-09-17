@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { useJourney, SCREEN_ORDER, ScreenId } from "@/lib/journey-context";
 import { cn } from "@/lib/utils";
 import { HOABL_LOGO_URL } from "@/lib/brand";
@@ -9,13 +9,13 @@ import { HOABL_LOGO_URL } from "@/lib/brand";
 const STAGES: { label: string; screens: ScreenId[] }[] = [
   {
     label: "Understanding",
-    screens: ["welcome", "buyer-profile", "profile-summary", "ai-processing", "select-project", "project-match", "project-walkthrough"],
+    screens: ["welcome", "buyer-profile", "ai-processing", "select-project", "project-match", "project-walkthrough"],
   },
   {
     label: "Selection",
-    screens: ["pocket-finder", "pocket-map", "pocket-detail", "compare-pockets"],
+    screens: ["pocket-map", "pocket-detail", "payment-plan"],
   },
-  { label: "Decision", screens: ["decision-confidence", "identity-capture", "token-kyc", "access-unlocked"] },
+  { label: "Decision", screens: ["identity-capture", "token-kyc", "access-unlocked"] },
   { label: "Advisor", screens: ["advisor-handoff"] },
 ];
 
@@ -24,11 +24,14 @@ export function ScreenShell({
   showBack = true,
   showStages = true,
   title,
+  onClose,
 }: {
   children: React.ReactNode;
   showBack?: boolean;
   showStages?: boolean;
   title?: string;
+  /** When set, renders a close (X) button instead of the back chevron — for screens presented as a full-screen popup. */
+  onClose?: () => void;
 }) {
   const { currentScreen, back, screenIndex } = useJourney();
   const stageIdx = STAGES.findIndex((s) => s.screens.includes(currentScreen));
@@ -77,7 +80,15 @@ export function ScreenShell({
       </div>
 
       <div className="relative z-10 flex items-center gap-2 border-b border-forest-900/8 bg-ivory-50/80 px-4 pb-2.5 pt-3 backdrop-blur-sm">
-        {showBack && screenIndex > 0 ? (
+        {onClose ? (
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-forest-900/60 hover:bg-forest-900/5"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : showBack && screenIndex > 0 ? (
           <button
             onClick={back}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-forest-900/60 hover:bg-forest-900/5"

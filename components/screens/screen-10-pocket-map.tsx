@@ -12,7 +12,7 @@ import { rankPockets, suitabilityTier } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh } from "@/lib/utils";
 
-type Tab = "matches" | "all" | "infra";
+type Tab = "matches" | "all";
 type Budget = "all" | "lt20" | "20-35" | "35-50" | "gt50";
 
 const BUDGETS: { value: Budget; label: string; test: (price: number) => boolean }[] = [
@@ -32,7 +32,7 @@ const TIER_COLOR: Record<string, string> = {
 const TIER_TILE: Record<string, string> = {
   Recommended: "border-forest-900 bg-forest-700 text-ivory-50",
   "Good fit": "border-gold-600 bg-gold-500 text-forest-950",
-  Alternative: "border-forest-900/30 bg-white text-forest-900/80",
+  Alternative: "border-forest-900/30 bg-forest-900/40 text-ivory-50",
 };
 
 // Aerial land photo, used as the map's backdrop instead of a flat gradient.
@@ -88,7 +88,6 @@ export function Screen10PocketMap() {
             [
               ["matches", "My matches"],
               ["all", "All pockets"],
-              ["infra", "Infrastructure"],
             ] as [Tab, string][]
           ).map(([value, label]) => (
             <button
@@ -178,7 +177,7 @@ export function Screen10PocketMap() {
           <LegendDot color="bg-forest-700" label="Recommended" />
           <LegendDot color="bg-gold-500" label="Good fit" />
           <LegendDot color="bg-forest-900/40" label="Alternative" />
-          <LegendDot color="bg-red-400" label="Not available" />
+          <LegendDot color="bg-red-500" label="Not available" />
         </div>
 
         <div className="mt-4 flex-1 space-y-2 overflow-y-auto no-scrollbar pb-2">
@@ -198,7 +197,7 @@ export function Screen10PocketMap() {
               <span
                 className={cn(
                   "rounded-full px-2 py-1 text-[10px] font-semibold text-white",
-                  pocket.availability === "sold" ? "bg-red-400" : TIER_COLOR[suitabilityTier(score)]
+                  pocket.availability === "sold" ? "bg-red-500" : TIER_COLOR[suitabilityTier(score)]
                 )}
               >
                 {pocket.availability === "sold" ? "Sold" : `${score}/100`}

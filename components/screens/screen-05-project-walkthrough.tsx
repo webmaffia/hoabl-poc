@@ -156,7 +156,6 @@ export function Screen05ProjectWalkthrough() {
   const [idx, setIdx] = useState(0);
   const sections = useMemo(() => buildSections(selectedProject), [selectedProject]);
   const section = sections[idx];
-  const isLast = idx === sections.length - 1;
   const accent = ACCENT_CLASSES[section.accent];
 
   useEffect(() => {
@@ -164,18 +163,23 @@ export function Screen05ProjectWalkthrough() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section.id]);
 
-  const handleContinue = () => {
-    if (isLast) {
-      track("project_walkthrough_completed");
-      next();
+  const goToPocketMap = () => {
+    track("project_walkthrough_completed");
+    next();
+  };
+
+  const goToSection = (i: number) => {
+    if (i === sections.length - 1) {
+      goToPocketMap();
       return;
     }
-    setIdx((i) => i + 1);
+    setIdx(i);
   };
 
   useVoiceCommands([
-    { labels: ["next", "continue"], action: handleContinue },
-    ...sections.map((s, i) => ({ labels: [s.label], action: () => setIdx(i) })),
+    { labels: ["next", "continue"], action: () => goToSection(Math.min(idx + 1, sections.length - 1)) },
+    { labels: ["pocket map", "find your pocket", "show me the pocket map"], action: goToPocketMap },
+    ...sections.map((s, i) => ({ labels: [s.label], action: () => goToSection(i) })),
   ]);
 
   return (
@@ -221,7 +225,7 @@ export function Screen05ProjectWalkthrough() {
           {sections.map((s, i) => (
             <button
               key={s.id}
-              onClick={() => setIdx(i)}
+              onClick={() => goToSection(i)}
               className={cn(
                 "flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                 i === idx
@@ -295,20 +299,9 @@ export function Screen05ProjectWalkthrough() {
           </AnimatePresence>
         </div>
 
-        <div className="px-5">
-          <div className="mt-4 flex items-center gap-1.5">
-            {sections.map((s, i) => (
-              <span
-                key={s.id}
-                className={cn(
-                  "h-1 flex-1 rounded-full transition-colors",
-                  i <= idx ? "bg-forest-800" : "bg-forest-900/10"
-                )}
-              />
-            ))}
-          </div>
-          <Button size="lg" className="mt-3 w-full" onClick={handleContinue}>
-            {isLast ? "Find your pocket →" : "Next"}
+        <div className="px-5 pt-3">
+          <Button size="lg" className="w-full" onClick={goToPocketMap}>
+            View pocket map &rarr;
           </Button>
         </div>
       </div>

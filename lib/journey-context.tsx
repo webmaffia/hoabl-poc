@@ -16,7 +16,6 @@ import { track } from "./analytics";
 export const SCREEN_ORDER = [
   "welcome",
   "buyer-profile",
-  "profile-summary",
   // A cinematic "Aira is thinking" moment between profile completion and
   // the project list — visually communicates the matching engine actually
   // running, rather than jumping straight to a static list.
@@ -26,11 +25,9 @@ export const SCREEN_ORDER = [
   "select-project",
   "project-match",
   "project-walkthrough",
-  "pocket-finder",
   "pocket-map",
   "pocket-detail",
-  "compare-pockets",
-  "decision-confidence",
+  "payment-plan",
   // A lightweight "send me my plan" moment — name + mobile, no full KYC —
   // before the heavier token payment + KYC step.
   "identity-capture",

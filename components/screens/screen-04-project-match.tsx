@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ChevronDown, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { motion } from "framer-motion";
+import { MapPin, Sparkles } from "lucide-react";
 import { ScreenShell } from "@/components/screen-shell";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { useJourney } from "@/lib/journey-context";
@@ -12,7 +11,6 @@ import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { PROJECT, PROJECTS } from "@/lib/data";
 import { topProjectMatch } from "@/lib/project-match";
-import { cn } from "@/lib/utils";
 
 // The full "why this fits you" breakdown now lives entirely in the
 // walkthrough that follows this screen — repeating it here (as we used to,
@@ -24,7 +22,6 @@ const FIT_SUMMARY = "Budget, horizon, location and plot preferences all line up 
 export function Screen04ProjectMatch() {
   const { next, selectedProject, selectProject, buyerProfile } = useJourney();
   const { speak } = useAira();
-  const [showOthers, setShowOthers] = useState(false);
   const match = topProjectMatch(buyerProfile);
   const isRecommended = selectedProject.id === match.project.id;
 
@@ -44,109 +41,84 @@ export function Screen04ProjectMatch() {
 
   const switchProject = (id: string) => {
     selectProject(id);
-    setShowOthers(false);
+    track("project_walkthrough_started");
+    next();
   };
 
   useVoiceCommands([
     { labels: ["explore", "continue", "next", "explore with aira", "yes"], action: proceed },
-    { labels: ["see other projects", "other projects"], action: () => setShowOthers((v) => !v) },
   ]);
 
   return (
     <ScreenShell showStages={false} title="Project match">
-      <div className="flex h-full flex-col px-5 pb-6 pt-5">
-        <motion.div key={selectedProject.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">
-            {isRecommended ? "Aira recommends" : "You selected"}
-          </p>
-          <h1 className="mt-1 font-serif text-[30px] leading-tight text-forest-900">{selectedProject.name}</h1>
-          {isRecommended && (
-            <span className="mt-2 inline-block rounded-full bg-forest-800 px-3 py-1 text-xs font-semibold text-ivory-100">
-              Best match for your profile
-            </span>
-          )}
-        </motion.div>
+      <div className="flex h-full flex-col overflow-y-auto no-scrollbar px-5 pb-5 pt-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">
+          {isRecommended ? "Aira recommends" : "You selected"}
+        </p>
 
-        <motion.div
-          key={`hero-${selectedProject.id}`}
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="relative mt-4 h-36 overflow-hidden rounded-xl2"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={selectedProject.heroImage} alt={selectedProject.name} className="h-full w-full object-cover" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/70 via-forest-950/10 to-transparent" />
-          <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-1 text-xs text-ivory-100 backdrop-blur">
-            <MapPin className="h-3 w-3" /> {selectedProject.location}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
+        <motion.button
+          key={selectedProject.id}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mt-5 flex items-start gap-3 rounded-xl2 border border-forest-900/8 bg-white p-4 shadow-card"
+          onClick={proceed}
+          className="mt-2 block w-full shrink-0 overflow-hidden rounded-2xl border-2 border-gold-500 bg-white text-left shadow-elevated"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-600">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-forest-900">Why this fits you</h3>
-              <TrustBadge kind="interpretation" />
-            </div>
-            <p className="text-sm text-forest-900/65">{FIT_SUMMARY}</p>
-          </div>
-        </motion.div>
-
-        <div className="mt-4 flex-1" />
-
-        <div className="mt-4 space-y-2.5">
-          <Button size="lg" className="w-full" onClick={proceed}>
-            Explore with Aira &rarr;
-          </Button>
-          <button
-            onClick={() => setShowOthers((v) => !v)}
-            className="mx-auto flex items-center gap-1 text-sm font-medium text-forest-900/50 hover:text-forest-900"
-          >
-            See other projects
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showOthers && "rotate-180")} />
-          </button>
-
-          <AnimatePresence initial={false}>
-            {showOthers && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="space-y-2 pb-1 pt-1">
-                  {[{ id: PROJECT.id, name: PROJECT.name, location: PROJECT.location, image: PROJECT.heroImage! }, ...PROJECTS]
-                    .filter((p) => p.id !== selectedProject.id)
-                    .map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => switchProject(p.id)}
-                        className="flex w-full items-center gap-3 rounded-xl border border-forest-900/8 bg-white p-2.5 text-left shadow-card"
-                      >
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={p.image} alt={p.name} draggable={false} className="h-full w-full select-none object-cover" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-forest-900">{p.name}</p>
-                          <p className="flex items-center gap-1 truncate text-xs text-forest-900/50">
-                            <MapPin className="h-3 w-3 shrink-0" /> {p.location}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                </div>
-              </motion.div>
+          <div className="relative h-44 w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={selectedProject.heroImage} alt={selectedProject.name} className="h-full w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/85 via-forest-950/15 to-transparent" />
+            {isRecommended && (
+              <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-gold-500 px-2.5 py-1 text-[11px] font-bold text-forest-950 shadow-card">
+                <Sparkles className="h-3 w-3" /> Best match for your profile
+              </span>
             )}
-          </AnimatePresence>
+            <div className="absolute inset-x-3 bottom-3">
+              <p className="font-serif text-2xl leading-tight text-ivory-50">{selectedProject.name}</p>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-ivory-100/80">
+                <MapPin className="h-3 w-3 shrink-0" /> {selectedProject.location}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 p-4">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-600">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-forest-900">Why this fits you</h3>
+                <TrustBadge kind="interpretation" />
+              </div>
+              <p className="text-sm text-forest-900/65">{FIT_SUMMARY}</p>
+            </div>
+          </div>
+        </motion.button>
+
+        <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-forest-900/40">
+          Other projects
+        </p>
+        <div className="flex-1 space-y-2 pb-2">
+          {[{ id: PROJECT.id, name: PROJECT.name, location: PROJECT.location, image: PROJECT.heroImage! }, ...PROJECTS]
+            .filter((p) => p.id !== selectedProject.id)
+            .map((p) => (
+              <motion.button
+                key={p.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => switchProject(p.id)}
+                className="flex w-full items-center gap-3 rounded-xl border border-forest-900/8 bg-white p-2.5 text-left shadow-card"
+              >
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-forest-900">{p.name}</p>
+                  <p className="flex items-center gap-1 truncate text-xs text-forest-900/50">
+                    <MapPin className="h-3 w-3 shrink-0" /> {p.location}
+                  </p>
+                </div>
+              </motion.button>
+            ))}
         </div>
       </div>
     </ScreenShell>

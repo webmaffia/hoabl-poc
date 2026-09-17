@@ -62,61 +62,6 @@ const STEPS: Step[] = [
     },
   },
   {
-    id: "location",
-    question: "Which location or project are you most interested in?",
-    options: [
-      { value: "aero-estate", label: "Aero Estate (Khopoli)" },
-      { value: "open", label: "Open to recommendations" },
-    ],
-    apply: (_p, v) => ({ location: v[0] === "aero-estate" ? "Aero Estate (Khopoli)" : "Open to recommendations" }),
-  },
-  {
-    id: "horizon",
-    question: "What's your investment horizon?",
-    options: [
-      { value: "0-3", label: "0 – 3 years" },
-      { value: "3-7", label: "3 – 7 years" },
-      { value: "7-10", label: "7 – 10 years" },
-      { value: "10+", label: "10+ years" },
-    ],
-    apply: (_p, v) => ({ horizon: v[0].replace("-", " – ") + (v[0] === "10+" ? "" : " years") }),
-  },
-  {
-    id: "risk",
-    question: "How would you describe your risk comfort?",
-    options: [
-      { value: "conservative", label: "Conservative" },
-      { value: "moderate", label: "Moderate" },
-      { value: "aggressive", label: "Aggressive" },
-    ],
-    apply: (_p, v) => ({ riskComfort: v[0] as BuyerProfile["riskComfort"] }),
-  },
-  {
-    id: "plot",
-    question: "What matters more to you in a plot?",
-    options: [
-      { value: "corner", label: "Corner plot" },
-      { value: "larger", label: "Larger plot" },
-      { value: "interior", label: "Privacy / interior plot" },
-      { value: "standard", label: "No strong preference" },
-    ],
-    apply: (_p, v) => ({ plotPreference: v[0] as BuyerProfile["plotPreference"] }),
-  },
-  {
-    id: "priorities",
-    question: "What matters most to you? Choose up to 3.",
-    multi: true,
-    maxSelect: 3,
-    options: [
-      { value: "accessibility", label: "Better accessibility" },
-      { value: "larger_plot", label: "Larger plot" },
-      { value: "corner_plot", label: "Corner plot" },
-      { value: "privacy", label: "Privacy" },
-      { value: "amenities", label: "Near amenities" },
-    ],
-    apply: (_p, v) => ({ priorities: v }),
-  },
-  {
     id: "expected",
     question: "What's the expected purpose of this land?",
     options: [

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Heart, GitCompare, Map, Route, Eye, Lock, Landmark } from "lucide-react";
+import { Heart, Map, Route, Eye, Lock, Landmark, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
 import { TrustBadge } from "@/components/trust/trust-badge";
@@ -14,7 +14,7 @@ import { useVoiceCommands } from "@/lib/voice-command-context";
 import { getPocketById } from "@/lib/data";
 import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
-import { cn, formatLakh, formatINR, computeEmi } from "@/lib/utils";
+import { cn, formatLakh } from "@/lib/utils";
 
 export function Screen11PocketDetail() {
   const { activePocketId, dispatch, goTo, buyerProfile, pocketPreferences, shortlistedPockets, projectPockets } = useJourney();
@@ -47,20 +47,19 @@ export function Screen11PocketDetail() {
     track("pocket_shortlisted", { pocketId: pocket.id });
   };
 
-  const compare = () => {
-    dispatch({ type: "SET_COMPARED", ids: Array.from(new Set([pocket.id, ...ranked.slice(0, 3).map((r) => r.pocket.id)])).slice(0, 3) });
+  const viewPaymentPlan = () => {
     track("pocket_compared", { pocketId: pocket.id });
-    goTo("compare-pockets");
+    goTo("payment-plan");
   };
 
   useVoiceCommands([
     { labels: ["shortlist", "save", "like"], action: shortlist },
-    { labels: ["compare", "compare pockets"], action: compare },
+    { labels: ["payment plan", "continue", "next"], action: viewPaymentPlan },
     { labels: ["view on map", "map", "back to map"], action: () => goTo("pocket-map") },
   ]);
 
   return (
-    <ScreenShell showStages={false} title="Pocket detail">
+    <ScreenShell showStages={false} title="Pocket detail" onClose={() => goTo("pocket-map")}>
       <div className="flex h-full flex-col overflow-y-auto no-scrollbar px-5 pb-5 pt-4">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-start justify-between">
@@ -124,8 +123,6 @@ export function Screen11PocketDetail() {
           </p>
         </div>
 
-        <PaymentPlan price={pocket.price} />
-
         <Section title="Why it may suit you">
           <ul className="space-y-1.5">
             {pocket.strengths.map((s) => (
@@ -153,16 +150,104 @@ export function Screen11PocketDetail() {
           <ConfirmWithHoabl items={["Current availability", "Specific development timelines", "Applicable documentation"]} />
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2.5">
-          <Button variant="outline" onClick={() => goTo("pocket-map")}>
+        <ComparisonSection pocket={pocket} score={score} ranked={ranked} />
+
+        <div className="mt-5">
+          <Button variant="outline" className="w-full" onClick={() => goTo("pocket-map")}>
             <Map className="h-4 w-4" /> View on map
           </Button>
-          <Button onClick={compare}>
-            <GitCompare className="h-4 w-4" /> Compare
+          <Button size="lg" className="mt-2.5 w-full" onClick={viewPaymentPlan}>
+            View payment plan &rarr;
           </Button>
         </div>
       </div>
     </ScreenShell>
+  );
+}
+
+const COMPARE_ROWS: { key: string; label: string; get: (p: import("@/lib/types").Pocket) => string }[] = [
+  { key: "price", label: "Price", get: (p) => formatLakh(p.price) },
+  { key: "size", label: "Size (sq.ft.)", get: (p) => p.sizeSqft.toLocaleString() },
+  { key: "road", label: "Road access", get: (p) => compareTier(p.roadAccess) },
+  { key: "privacy", label: "Privacy", get: (p) => compareTier(p.privacy) },
+  { key: "amenity", label: "Amenity proximity", get: (p) => compareTier(p.amenityProximity) },
+];
+
+function compareTier(v: number) {
+  if (v >= 80) return "High";
+  if (v >= 55) return "Medium";
+  return "Low";
+}
+
+/** Shows how this pocket stacks up against its top alternatives, inline —
+ * replaces the separate compare-pockets screen so buyers see the trade-offs
+ * without leaving the pocket they're actually looking at. */
+function ComparisonSection({
+  pocket,
+  score,
+  ranked,
+}: {
+  pocket: import("@/lib/types").Pocket;
+  score: number;
+  ranked: { pocket: import("@/lib/types").Pocket; score: number }[];
+}) {
+  const others = ranked.filter((r) => r.pocket.id !== pocket.id).slice(0, 2);
+  const scored = [{ pocket, score }, ...others];
+  if (others.length === 0) return null;
+
+  return (
+    <div className="mt-5 rounded-xl2 border border-forest-900/8 bg-white p-4 shadow-card">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-forest-900/45">
+          Compare with alternatives
+        </span>
+        <TrustBadge kind="interpretation" />
+      </div>
+
+      <div className="overflow-x-auto no-scrollbar">
+        <table className="w-full min-w-[280px] border-separate border-spacing-y-1.5 text-sm">
+          <thead>
+            <tr>
+              <th className="text-left text-[11px] font-medium text-forest-900/40" />
+              {scored.map(({ pocket: p }) => (
+                <th key={p.id} className="min-w-[76px] px-1 pb-1 text-center">
+                  <span className="block text-xs font-semibold text-forest-900">{p.name}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARE_ROWS.map((row) => (
+              <tr key={row.key} className="rounded-xl bg-forest-900/[0.02]">
+                <td className="rounded-l-xl px-2.5 py-2 text-[11px] font-medium text-forest-900/50">{row.label}</td>
+                {scored.map(({ pocket: p }) => (
+                  <td key={p.id} className="px-1 py-2 text-center text-[13px] font-medium text-forest-900">
+                    {row.get(p)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            <tr className="rounded-xl bg-forest-800/5">
+              <td className="rounded-l-xl px-2.5 py-2 text-[11px] font-semibold text-forest-800">Profile fit</td>
+              {scored.map(({ pocket: p, score: s }, i) => (
+                <td key={p.id} className="px-1 py-2 text-center">
+                  <span className={cn("text-sm font-bold", i === 0 ? "text-forest-800" : "text-forest-900/60")}>
+                    {s}
+                  </span>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 flex items-start gap-2 rounded-xl border border-gold-500/25 bg-gold-50 p-3">
+        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-600" />
+        <p className="text-sm text-forest-900/80">
+          {scored[0].pocket.name} leads on profile fit here — {others[0].pocket.name} is the next best trade-off.
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -189,165 +274,6 @@ function topPriorityPhrase(prefs: string[]) {
     lower_entry_price: "the lowest entry price",
   };
   return prefs.length ? map[prefs[0]] || "your priorities" : "accessibility";
-}
-
-type PlanType = "clp" | "downpayment" | "subvention";
-
-const PLAN_LABELS: Record<PlanType, string> = {
-  clp: "CLP",
-  downpayment: "Down payment",
-  subvention: "Subvention",
-};
-
-const PLAN_RANGE: Record<PlanType, { min: number; max: number; default: number }> = {
-  clp: { min: 10, max: 40, default: 20 },
-  downpayment: { min: 50, max: 90, default: 60 },
-  subvention: { min: 10, max: 30, default: 20 },
-};
-
-const PLAN_NOTE: Record<PlanType, string> = {
-  clp: "Paid in stages as construction and infrastructure progress.",
-  downpayment: "Most of the amount is paid upfront, ahead of agreement registration.",
-  subvention: "The developer covers interest on the financed portion until possession, under this scheme.",
-};
-
-function buildSchedule(plan: PlanType, bookingPct: number): { label: string; pct: number }[] {
-  if (plan === "downpayment") {
-    return [
-      { label: "On booking", pct: bookingPct },
-      { label: "Balance before registration", pct: 100 - bookingPct },
-    ];
-  }
-  if (plan === "subvention") {
-    return [
-      { label: "On booking", pct: bookingPct },
-      { label: "On possession", pct: 100 - bookingPct },
-    ];
-  }
-  // Construction Linked Plan: booking % is adjustable, the remaining stages
-  // scale proportionally to their original weights (registration 15,
-  // development 25, infrastructure 20, possession 20 — summing to 80 at the
-  // default 20% booking), with rounding remainder absorbed into the last
-  // stage so the total always reconciles to exactly 100%.
-  const rest = 100 - bookingPct;
-  const weights = [15, 25, 20, 20];
-  const scaled = weights.map((w) => Math.round((w / 80) * rest));
-  scaled[scaled.length - 1] += rest - scaled.reduce((a, b) => a + b, 0);
-  const [registration, development, infra, possession] = scaled;
-  return [
-    { label: "On booking", pct: bookingPct },
-    { label: "Agreement registration", pct: registration },
-    { label: "Land development", pct: development },
-    { label: "Infrastructure", pct: infra },
-    { label: "On possession", pct: possession },
-  ];
-}
-
-function PaymentPlan({ price }: { price: number }) {
-  const [plan, setPlan] = useState<PlanType>("clp");
-  const [bookingPct, setBookingPct] = useState(PLAN_RANGE.clp.default);
-
-  const range = PLAN_RANGE[plan];
-  const schedule = useMemo(() => buildSchedule(plan, bookingPct), [plan, bookingPct]);
-  const dueNow = Math.round((price * bookingPct) / 100);
-  const financed = price - dueNow;
-  const emi = computeEmi(financed, 8.75, 15);
-
-  const selectPlan = (p: PlanType) => {
-    setPlan(p);
-    setBookingPct(PLAN_RANGE[p].default);
-  };
-
-  useVoiceCommands([
-    { labels: ["clp", "construction linked plan"], action: () => selectPlan("clp") },
-    { labels: ["down payment", "downpayment"], action: () => selectPlan("downpayment") },
-    { labels: ["subvention"], action: () => selectPlan("subvention") },
-  ]);
-
-  return (
-    <div className="mt-5 rounded-xl2 border border-forest-900/8 bg-white p-4 shadow-card">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-forest-900/45">Payment plan</span>
-        <TrustBadge kind="interpretation" />
-      </div>
-
-      <div className="flex rounded-full bg-forest-900/5 p-1">
-        {(Object.keys(PLAN_LABELS) as PlanType[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => selectPlan(p)}
-            className={cn(
-              "flex-1 rounded-full py-1.5 text-xs font-medium transition-colors",
-              plan === p ? "bg-white text-forest-900 shadow-card" : "text-forest-900/45"
-            )}
-          >
-            {PLAN_LABELS[p]}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wide text-forest-900/50">Payment on booking</span>
-          <span className="font-serif text-lg text-forest-900">{bookingPct}%</span>
-        </div>
-        <input
-          type="range"
-          min={range.min}
-          max={range.max}
-          step={5}
-          value={bookingPct}
-          onChange={(e) => setBookingPct(Number(e.target.value))}
-          className="w-full accent-gold-500"
-        />
-        <div className="flex justify-between text-[10px] text-forest-900/35">
-          <span>{range.min}%</span>
-          <span>{range.max}%</span>
-        </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between rounded-lg bg-forest-900/5 px-3 py-2.5">
-        <span className="text-sm font-medium text-forest-900/70">Due now</span>
-        <span className="font-serif text-lg text-forest-900">{formatINR(dueNow)}</span>
-      </div>
-
-      <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-forest-900/40">
-        {PLAN_LABELS[plan]} schedule
-      </p>
-      <div className="space-y-1.5">
-        {schedule.map((s) => (
-          <div key={s.label} className="flex items-center justify-between text-sm">
-            <span className="text-forest-900/75">{s.label}</span>
-            <span className="flex items-baseline gap-2">
-              <span className="text-xs text-forest-900/40">{s.pct}%</span>
-              <span className="font-medium text-forest-900">{formatINR(Math.round((price * s.pct) / 100))}</span>
-            </span>
-          </div>
-        ))}
-        <div className="mt-1 flex items-center justify-between border-t border-forest-900/8 pt-1.5 text-sm font-semibold">
-          <span className="text-forest-900">Total</span>
-          <span className="text-forest-900">{formatLakh(price)}</span>
-        </div>
-      </div>
-      <p className="mt-2 text-[11px] text-forest-900/40">{PLAN_NOTE[plan]}</p>
-
-      {financed > 0 && (
-        <div className="mt-4 rounded-xl border border-forest-800/15 bg-forest-800/5 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-forest-900/45">Indicative EMI</p>
-          <p className="mt-0.5 font-serif text-2xl text-forest-900">
-            {formatINR(emi)} <span className="font-sans text-sm font-normal text-forest-900/50">/ month</span>
-          </p>
-          <p className="mt-1 text-[11px] text-forest-900/50">
-            On {formatLakh(financed)} financed &middot; 15 years &middot; 8.75%
-          </p>
-          <p className="mt-1 text-[10px] text-forest-900/35">
-            Indicative only — not a loan approval or an offer. Rates vary by lender and profile; please consult your
-            advisor.
-          </p>
-        </div>
-      )}
-    </div>
-  );
 }
 
 const FEATURE_CHIPS = [

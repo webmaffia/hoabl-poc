@@ -162,17 +162,29 @@ export function Screen07TokenKyc() {
                 <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-forest-900/40">KYC checklist</p>
                 <div className="grid grid-cols-2 gap-2">
                   {KYC_CHECKLIST.map((k) => (
-                    <div key={k} className="rounded-lg border border-forest-900/8 bg-white px-3 py-2 text-xs font-medium text-forest-900/80">
+                    <div
+                      key={k}
+                      className="flex items-center gap-2 rounded-lg border border-forest-900/8 px-3 py-2 text-xs font-medium text-forest-900/80"
+                    >
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-forest-800/10 text-forest-800">
+                        <Check className="h-2.5 w-2.5" />
+                      </span>
                       {k}
                     </div>
                   ))}
                 </div>
 
                 <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-forest-900/40">Payment methods</p>
-                <div className="flex gap-2 text-xs font-medium text-forest-900/70">
-                  <span className="rounded-full border border-forest-900/10 px-3 py-1">UPI</span>
-                  <span className="rounded-full border border-forest-900/10 px-3 py-1">Net Banking</span>
-                  <span className="rounded-full border border-forest-900/10 px-3 py-1">Debit/Credit Card</span>
+                <div className="flex flex-wrap gap-2 text-xs font-medium text-forest-800">
+                  <span className="flex items-center gap-1.5 rounded-full bg-forest-800/8 px-3 py-1.5">
+                    <Smartphone className="h-3 w-3" /> UPI
+                  </span>
+                  <span className="flex items-center gap-1.5 rounded-full bg-forest-800/8 px-3 py-1.5">
+                    <Landmark className="h-3 w-3" /> Net Banking
+                  </span>
+                  <span className="flex items-center gap-1.5 rounded-full bg-forest-800/8 px-3 py-1.5">
+                    <CreditCard className="h-3 w-3" /> Debit/Credit Card
+                  </span>
                 </div>
               </div>
 
@@ -216,7 +228,7 @@ export function Screen07TokenKyc() {
                 <button
                   onClick={() => setSelfieDone(true)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium",
+                    "flex w-full items-center justify-between rounded-xl border bg-white px-4 py-3 text-sm font-medium shadow-card",
                     selfieDone ? "border-forest-800 bg-forest-800/5 text-forest-800" : "border-dashed border-forest-900/20 text-forest-900/60"
                   )}
                 >
