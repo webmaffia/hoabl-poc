@@ -122,21 +122,24 @@ export function Screen04ProjectMatch() {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="no-scrollbar flex gap-2.5 overflow-x-auto pb-1 pt-1" style={{ WebkitOverflowScrolling: "touch" }}>
+                <div className="space-y-2 pb-1 pt-1">
                   {[{ id: PROJECT.id, name: PROJECT.name, location: PROJECT.location, image: PROJECT.heroImage! }, ...PROJECTS]
                     .filter((p) => p.id !== selectedProject.id)
                     .map((p) => (
                       <button
                         key={p.id}
                         onClick={() => switchProject(p.id)}
-                        className="relative h-24 w-36 shrink-0 overflow-hidden rounded-xl border border-forest-900/8 shadow-card"
+                        className="flex w-full items-center gap-3 rounded-xl border border-forest-900/8 bg-white p-2.5 text-left shadow-card"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.image} alt={p.name} draggable={false} className="h-full w-full select-none object-cover" />
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/85 via-forest-950/10 to-transparent" />
-                        <div className="absolute inset-x-2 bottom-1.5 text-left">
-                          <p className="truncate text-[11px] font-semibold text-ivory-50">{p.name}</p>
-                          <p className="truncate text-[9px] text-ivory-100/70">{p.location}</p>
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.image} alt={p.name} draggable={false} className="h-full w-full select-none object-cover" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-forest-900">{p.name}</p>
+                          <p className="flex items-center gap-1 truncate text-xs text-forest-900/50">
+                            <MapPin className="h-3 w-3 shrink-0" /> {p.location}
+                          </p>
                         </div>
                       </button>
                     ))}
