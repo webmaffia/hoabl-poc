@@ -215,18 +215,40 @@ export function Screen02BuyerProfile() {
 
   const handleContinue = () => submitAnswer(selection);
 
+  // Voice answers should feel like a real conversation — saying an option
+  // both selects it and moves on, rather than requiring a separate tap.
+  // For multi-select steps that means auto-advancing once the max number of
+  // choices has been reached by voice (nothing more to pick at that point);
+  // below the max, it still just selects, since the user may want to name
+  // more than one option.
+  const selectOptionByVoice = (value: string) => {
+    if (!step.multi) {
+      submitAnswer([value]);
+      return;
+    }
+    setSelection((prev) => {
+      let next = prev;
+      if (prev.includes(value)) next = prev.filter((v) => v !== value);
+      else if (!step.maxSelect || prev.length < step.maxSelect) next = [...prev, value];
+      if (step.maxSelect && next.length >= step.maxSelect) {
+        setTimeout(() => submitAnswer(next), 0);
+      }
+      return next;
+    });
+  };
+
   useVoiceCommands(
     typing
       ? []
       : step.multi
       ? [
-          ...step.options.map((o) => ({ labels: [o.label], action: () => toggleOption(o.value) })),
+          ...step.options.map((o) => ({ labels: [o.label], action: () => selectOptionByVoice(o.value) })),
           {
             labels: ["done", "continue", "next", "send", "that's it", "submit"],
             action: () => submitAnswer(selection),
           },
         ]
-      : step.options.map((o) => ({ labels: [o.label], action: () => submitAnswer([o.value]) }))
+      : step.options.map((o) => ({ labels: [o.label], action: () => selectOptionByVoice(o.value) }))
   );
 
   const progressPct = ((stepIdx + 1) / STEPS.length) * 100;
