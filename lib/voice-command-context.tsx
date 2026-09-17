@@ -5,7 +5,12 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 export interface VoiceCommand {
   /** One or more phrases that should trigger this command (e.g. an option's label plus synonyms). */
   labels: string[];
-  action: () => void;
+  action: (heard: string) => void;
+  /** Optional custom matcher, checked before label-based fuzzy matching — for
+   * open-ended answers a fixed label list can't cover (e.g. "40", "40L", "40
+   * lakh" all meaning the same budget bucket). When any registered command's
+   * `test` matches, it wins outright regardless of label scores. */
+  test?: (heard: string) => boolean;
 }
 
 export type InteractionMode = "talk" | "chat";
@@ -85,6 +90,13 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
 
   const handleTranscript = useCallback((text: string) => {
     setHeard(text);
+
+    const testMatch = commandsRef.current.find((cmd) => cmd.test?.(text));
+    if (testMatch) {
+      testMatch.action(text);
+      return;
+    }
+
     let best: VoiceCommand | null = null;
     let bestScore = 0;
     for (const cmd of commandsRef.current) {
@@ -96,7 +108,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
         }
       }
     }
-    if (best) best.action();
+    if (best) best.action(text);
   }, []);
 
   useEffect(() => {

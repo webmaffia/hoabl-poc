@@ -19,6 +19,43 @@ interface Option {
   label: string;
 }
 
+// Buyers often just say/type a number ("40", "40L", "40 lakh", "1.2 crore")
+// instead of one of the exact option labels — the generic label matcher in
+// voice-command-context can't handle that (no label to fuzzy-match against),
+// so the budget step needs its own numeric parsing to bucket a free-form
+// amount into the right option.
+function parseBudgetLakhs(text: string): number | null {
+  const t = text.toLowerCase().replace(/,/g, "");
+  const numMatch = t.match(/[\d.]+/);
+  if (!numMatch) return null;
+  const raw = parseFloat(numMatch[0]);
+  if (isNaN(raw)) return null;
+  if (/cr|crore/.test(t)) return raw * 100;
+  if (/\d\s*l\b|lakh|lac/.test(t)) return raw;
+  // No unit given — a bare number this small is almost certainly meant in
+  // lakhs ("40" -> ₹40L); a large one is rupees ("4000000" -> ₹40L).
+  return raw >= 100000 ? raw / 100000 : raw;
+}
+
+function bucketBudget(lakhs: number): string {
+  if (lakhs < 20) return "lt20";
+  if (lakhs <= 35) return "20-35";
+  if (lakhs <= 50) return "35-50";
+  return "gt50";
+}
+
+// Boundary phrasing ("< ₹20L", "under 20", "above 50") takes priority over
+// plain numeric bucketing — otherwise a boundary value like "20" would land
+// one bucket off from what "< ₹20L" actually means.
+function resolveBudgetBucket(text: string): string | null {
+  const lakhs = parseBudgetLakhs(text);
+  if (lakhs === null) return null;
+  const t = text.toLowerCase();
+  if (/<|under|below|less than|up ?to/.test(t)) return "lt20";
+  if (/>|above|more than|over/.test(t)) return "gt50";
+  return bucketBudget(lakhs);
+}
+
 interface Step {
   id: string;
   question: string;
@@ -192,6 +229,15 @@ export function Screen02BuyerProfile() {
             labels: ["done", "continue", "next", "send", "that's it", "submit"],
             action: () => submitAnswer(selection),
           },
+        ]
+      : step.id === "budget"
+      ? [
+          {
+            labels: [],
+            test: (heard: string) => parseBudgetLakhs(heard) !== null,
+            action: (heard: string) => selectOptionByVoice(resolveBudgetBucket(heard)!),
+          },
+          ...step.options.map((o) => ({ labels: [o.label], action: () => selectOptionByVoice(o.value) })),
         ]
       : step.options.map((o) => ({ labels: [o.label], action: () => selectOptionByVoice(o.value) }))
   );

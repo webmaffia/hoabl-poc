@@ -28,7 +28,9 @@ import { NextResponse } from "next/server";
  * FULL mode additionally requires exactly one of `avatar_persona` or
  * `voice_agent` — both reference a resource that only exists once created
  * in the LiveAvatar dashboard (there's no API to create one). Set whichever
- * one your account has via HEYGEN_VOICE_AGENT_ID or HEYGEN_CONTEXT_ID.
+ * one your account has via HEYGEN_VOICE_AGENT_ID or HEYGEN_CONTEXT_ID; when
+ * both are set, HEYGEN_CONTEXT_ID takes priority (a context carries the
+ * knowledge-base persona, which is the more specific configuration).
  */
 export async function POST() {
   const apiKey = process.env.HEYGEN_API_KEY;
@@ -61,9 +63,9 @@ export async function POST() {
         mode: "FULL",
         avatar_id: avatarId,
         is_sandbox: process.env.HEYGEN_SANDBOX === "true",
-        ...(voiceAgentId
-          ? { voice_agent: { id: voiceAgentId } }
-          : { avatar_persona: { context_id: contextId } }),
+        ...(contextId
+          ? { avatar_persona: { context_id: contextId } }
+          : { voice_agent: { id: voiceAgentId } }),
       }),
     });
 
