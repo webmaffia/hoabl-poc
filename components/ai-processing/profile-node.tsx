@@ -11,6 +11,21 @@ export interface ProfileNodeData {
   icon: React.ElementType;
 }
 
+/** A plain marker for a node that isn't currently active — keeps the ring
+ * from being cluttered with 7 text labels at once; only the active node
+ * expands into a full labeled pill. */
+export function RingDot({ x, y, done }: { x: number; y: number; done: boolean }) {
+  return (
+    <span
+      className={cn(
+        "absolute z-30 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border transition-colors duration-300",
+        done ? "border-gold-300 bg-gold-400" : "border-white/25 bg-white/10"
+      )}
+      style={{ left: x, top: y, boxShadow: done ? "0 0 6px 2px rgba(212,175,90,0.55)" : "none" }}
+    />
+  );
+}
+
 export function ProfileNode({
   data,
   x,
