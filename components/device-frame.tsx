@@ -37,7 +37,16 @@ export function DeviceFrame({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <aside className="w-64 shrink-0" />
+        <aside className="w-64 shrink-0 text-ivory-200">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">Try it on your phone</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/qr.png" alt="Scan to open on mobile" className="mx-auto mt-4 h-40 w-40 rounded-lg bg-white p-2" />
+            <p className="mt-4 text-xs leading-relaxed text-ivory-200/60">
+              Scan with your phone&rsquo;s camera to open this prototype on mobile.
+            </p>
+          </div>
+        </aside>
       </div>
 
       {/* Mobile / small viewport: full-bleed app */}
