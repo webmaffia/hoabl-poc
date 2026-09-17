@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * screen.
  */
 export function AiraCtaBar() {
-  const { supported, listening, mode, setMode, toggleListening } = useVoice();
+  const { supported, listening, mode, setMode, toggleListening, micError } = useVoice();
   const { isSpeaking, stopSpeaking } = useAira();
 
   const handleMicTap = () => {
@@ -26,7 +26,12 @@ export function AiraCtaBar() {
   };
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center">
+    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex flex-col items-center gap-2">
+      {micError && (
+        <span className="pointer-events-auto max-w-[85%] rounded-full bg-red-500/90 px-3 py-1.5 text-center text-[11px] font-medium text-white shadow-elevated">
+          {micError}
+        </span>
+      )}
       <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-forest-950/90 p-1 shadow-elevated backdrop-blur">
         {isSpeaking && (
           <button

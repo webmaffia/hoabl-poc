@@ -16,6 +16,8 @@ interface VoiceContextValue {
   listening: boolean;
   /** The most recent thing the user said (by voice or typed chat), for on-screen feedback. */
   heard: string | null;
+  /** Why the mic last failed (permission denied, no speech detected, etc.) — surfaced in the UI instead of failing silently. */
+  micError: string | null;
   toggleListening: () => void;
   /** Proactively triggers the browser's mic permission prompt (e.g. on the
    * welcome screen) so it's already granted by the time the user taps "Talk
@@ -64,6 +66,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState<string | null>(null);
   const [supported, setSupported] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const [mode, setMode] = useState<InteractionMode>("talk");
   const [avatarExpanded, setAvatarExpanded] = useState(false);
 
@@ -110,10 +113,23 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
     recognition.lang = "en-IN";
     recognition.onresult = (e: any) => {
       const text = e.results[e.results.length - 1][0].transcript;
+      setMicError(null);
       handleTranscript(text);
     };
     recognition.onend = () => setListening(false);
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = (e: any) => {
+      // eslint-disable-next-line no-console
+      console.error("[Voice] SpeechRecognition error:", e.error);
+      const messages: Record<string, string> = {
+        "not-allowed": "Mic access is blocked — allow microphone permission for this site and try again.",
+        "service-not-allowed": "Mic access is blocked — allow microphone permission for this site and try again.",
+        "no-speech": "Didn't catch that — try again.",
+        "audio-capture": "No microphone found on this device.",
+        network: "Voice recognition needs an internet connection.",
+      };
+      setMicError(messages[e.error] || "Voice recognition failed — try again.");
+      setListening(false);
+    };
     recognitionRef.current = recognition;
 
     return () => {
@@ -131,6 +147,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
       setListening(false);
     } else {
       setHeard(null);
+      setMicError(null);
       try {
         recognition.start();
         setListening(true);
@@ -152,8 +169,9 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then((stream) => stream.getTracks().forEach((t) => t.stop()))
-      .catch(() => {
-        /* denied or unavailable — voice features just stay unavailable until granted */
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error("[Voice] Mic permission request failed:", err);
       });
   }, []);
 
@@ -163,6 +181,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
         supported,
         listening,
         heard,
+        micError,
         toggleListening,
         requestMicPermission,
         submitText,
