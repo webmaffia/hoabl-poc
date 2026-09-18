@@ -12,9 +12,12 @@ import {
   PuzzleIcon,
   ShieldCheck,
   Compass,
+  Download,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScreenShell } from "@/components/screen-shell";
+import { BrochureModal } from "@/components/brochure-modal";
 import { VerifiedInfo, ConfirmWithHoabl } from "@/components/trust/trust-sections";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
@@ -154,6 +157,7 @@ export function Screen05ProjectWalkthrough() {
   const { next, selectedProject } = useJourney();
   const { speak } = useAira();
   const [idx, setIdx] = useState(0);
+  const [showBrochureModal, setShowBrochureModal] = useState(false);
   const sections = useMemo(() => buildSections(selectedProject), [selectedProject]);
   const section = sections[idx];
   const accent = ACCENT_CLASSES[section.accent];
@@ -166,6 +170,29 @@ export function Screen05ProjectWalkthrough() {
   const goToPocketMap = () => {
     track("project_walkthrough_completed");
     next();
+  };
+
+  const openBrochureModal = () => {
+    track("brochure_cta_clicked", { project: selectedProject.id });
+    setShowBrochureModal(true);
+  };
+
+  const shareBrochure = async () => {
+    track("brochure_share_clicked", { project: selectedProject.id });
+    const brochureUrl = selectedProject.brochureUrl || "/aero.pdf";
+    const absoluteUrl = `${window.location.origin}${brochureUrl}`;
+    const shareText = `${selectedProject.name} — brochure`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareText, text: shareText, url: absoluteUrl });
+      } catch {
+        // user cancelled the native share sheet — nothing to do
+      }
+      return;
+    }
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${absoluteUrl}`)}`, "_blank");
   };
 
   const goToSection = (i: number) => {
@@ -299,12 +326,27 @@ export function Screen05ProjectWalkthrough() {
           </AnimatePresence>
         </div>
 
-        <div className="px-5 pt-3">
+        <div className="space-y-2 px-5 pt-3">
+          <div className="flex gap-2">
+            <Button variant="outline" size="md" className="flex-1" onClick={openBrochureModal}>
+              <Download className="h-4 w-4" /> Brochure
+            </Button>
+            <Button variant="outline" size="md" className="flex-1" onClick={shareBrochure}>
+              <Share2 className="h-4 w-4" /> Share
+            </Button>
+          </div>
           <Button size="lg" className="w-full" onClick={goToPocketMap}>
             View pocket map &rarr;
           </Button>
         </div>
       </div>
+
+      <BrochureModal
+        open={showBrochureModal}
+        onClose={() => setShowBrochureModal(false)}
+        projectName={selectedProject.name}
+        brochureUrl={selectedProject.brochureUrl || "/aero.pdf"}
+      />
     </ScreenShell>
   );
 }

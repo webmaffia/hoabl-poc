@@ -23,7 +23,13 @@ export const PROJECT: Project = {
     "RERA registration number",
     "Possession and handover timeline",
   ],
+  brochureUrl: "/aero.pdf",
 };
+
+// Only Aero Estate has a real brochure PDF in public/. Every other project
+// falls back to the same file for this demo (mirrors AERO_VIDEO_URL's
+// fallback-to-hero-photo pattern in the walkthrough screen).
+const DEFAULT_BROCHURE_URL = "/aero.pdf";
 
 export interface ProjectListing {
   id: string;
@@ -367,6 +373,7 @@ export function getProjectById(id: string): Project {
       "RERA registration number",
       "Possession and handover timeline",
     ],
+    brochureUrl: DEFAULT_BROCHURE_URL,
   };
 }
 

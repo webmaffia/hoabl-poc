@@ -58,6 +58,7 @@ export interface Project {
   tagline: string;
   verified: VerifiedFact[];
   needsConfirmation: string[];
+  brochureUrl?: string;
 }
 
 export type ConfidenceLevel = "unsure" | "almost" | "confident" | "ready";

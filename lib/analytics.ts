@@ -35,7 +35,11 @@ export type AnalyticsEvent =
   | "identity_captured"
   | "plan_sent_whatsapp"
   | "remaining_payment_completed"
-  | "demo_reset";
+  | "demo_reset"
+  | "brochure_cta_clicked"
+  | "brochure_mobile_submitted"
+  | "brochure_downloaded"
+  | "brochure_share_clicked";
 
 interface LoggedEvent {
   event: AnalyticsEvent;
