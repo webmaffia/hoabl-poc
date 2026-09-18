@@ -4,13 +4,11 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ShieldCheck, BadgeCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AiraVisual } from "@/components/aira-visual";
 import { LiveViewerBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoice, useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
 import { HOABL_LOGO_URL } from "@/lib/brand";
 import { PROJECT, PROJECTS } from "@/lib/data";
 
@@ -62,7 +60,7 @@ const TRUST_BADGES = [
 
 export function Screen01Welcome() {
   const { next } = useJourney();
-  const { speak, status, isSpeaking } = useAira();
+  const { speak } = useAira();
   const { requestMicPermission } = useVoice();
 
   useEffect(() => {
@@ -101,23 +99,6 @@ export function Screen01Welcome() {
             <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-gold-300/90">
               AI Land Advisor
             </div>
-          </div>
-
-          <div
-            className={cn(
-              "relative h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-gold-400/70 bg-forest-800",
-              isSpeaking && "ring-2 ring-gold-400/50"
-            )}
-            role="img"
-            aria-label={status === "live" ? "Aira is live" : "Aira, your AI advisor"}
-          >
-            <AiraVisual className="h-full w-full object-cover" />
-            <span
-              className={cn(
-                "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-forest-950",
-                status === "live" ? "bg-emerald-400" : status === "connecting" ? "animate-pulse bg-gold-400" : "bg-ivory-100/40"
-              )}
-            />
           </div>
         </div>
 

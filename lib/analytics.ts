@@ -39,7 +39,8 @@ export type AnalyticsEvent =
   | "brochure_cta_clicked"
   | "brochure_mobile_submitted"
   | "brochure_downloaded"
-  | "brochure_share_clicked";
+  | "brochure_share_clicked"
+  | "support_call_clicked";
 
 interface LoggedEvent {
   event: AnalyticsEvent;

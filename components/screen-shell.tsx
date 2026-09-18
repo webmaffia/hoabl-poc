@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, PhoneCall, X } from "lucide-react";
 import { useJourney, SCREEN_ORDER, ScreenId } from "@/lib/journey-context";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { HOABL_LOGO_URL } from "@/lib/brand";
 
@@ -70,13 +71,21 @@ export function ScreenShell({
         HoABL
       </div>
 
-      <div className="relative z-10 flex items-center justify-start bg-forest-900 px-4 py-3 shadow-card">
+      <div className="relative z-10 flex items-center justify-between bg-forest-900 px-4 py-3 shadow-card">
         {/* The real hoabl.com wordmark is white ink, so it needs a dark
             ground behind it — a full-width plum strip, matching how HoABL
             presents this logo on their own site, rather than inverting it
             to black. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={HOABL_LOGO_URL} alt="The House of Abhinandan Lodha" className="h-6 w-auto" />
+        <button
+          type="button"
+          onClick={() => track("support_call_clicked", { screen: currentScreen })}
+          aria-label="Contact support"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ivory-50/10 text-ivory-100 hover:bg-ivory-50/20"
+        >
+          <PhoneCall className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="relative z-10 flex items-center gap-2 border-b border-forest-900/8 bg-ivory-50/80 px-4 pb-2.5 pt-3 backdrop-blur-sm">
