@@ -328,10 +328,10 @@ export function Screen05ProjectWalkthrough() {
 
         <div className="space-y-2 px-5 pt-3">
           <div className="flex gap-2">
-            <Button variant="outline" size="md" className="flex-1" onClick={openBrochureModal}>
+            <Button variant="gold" size="md" className="flex-1" onClick={openBrochureModal}>
               <Download className="h-4 w-4" /> Brochure
             </Button>
-            <Button variant="outline" size="md" className="flex-1" onClick={shareBrochure}>
+            <Button variant="gold" size="md" className="flex-1" onClick={shareBrochure}>
               <Share2 className="h-4 w-4" /> Share
             </Button>
           </div>
