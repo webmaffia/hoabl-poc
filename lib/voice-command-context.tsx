@@ -168,6 +168,16 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
       recognition.stop();
       setListening(false);
     } else {
+      // getUserMedia/SpeechRecognition are only available in a "secure
+      // context" — https, or http on localhost. Opening the app over plain
+      // http via a LAN IP (e.g. testing on a phone) silently fails with the
+      // browser's generic "not-allowed" error, which looks identical to the
+      // user having denied mic access — so we catch it separately here with
+      // an actionable message instead of the confusing default one.
+      if (typeof window !== "undefined" && window.isSecureContext === false) {
+        setMicError("Voice needs a secure connection — open this over HTTPS (or localhost) to use the mic.");
+        return;
+      }
       setHeard(null);
       setMicError(null);
       try {
@@ -187,6 +197,10 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
   );
 
   const requestMicPermission = useCallback(() => {
+    if (typeof window !== "undefined" && window.isSecureContext === false) {
+      setMicError("Voice needs a secure connection — open this over HTTPS (or localhost) to use the mic.");
+      return;
+    }
     if (!navigator.mediaDevices?.getUserMedia) return;
     navigator.mediaDevices
       .getUserMedia({ audio: true })
@@ -194,6 +208,11 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
       .catch((err) => {
         // eslint-disable-next-line no-console
         console.error("[Voice] Mic permission request failed:", err);
+        if (err?.name === "NotAllowedError") {
+          setMicError("Mic access is blocked — allow microphone permission for this site and try again.");
+        } else if (err?.name === "NotFoundError") {
+          setMicError("No microphone found on this device.");
+        }
       });
   }, []);
 

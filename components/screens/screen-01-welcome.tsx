@@ -60,7 +60,7 @@ const TRUST_BADGES = [
 
 export function Screen01Welcome() {
   const { next } = useJourney();
-  const { speak } = useAira();
+  const { speak, status, isSpeaking } = useAira();
   const { requestMicPermission } = useVoice();
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export function Screen01Welcome() {
           <div className="mt-6">
             <div className="mb-3 flex items-center justify-center gap-2">
               <LiveViewerBadge seed="landing" className="bg-white/10 text-ivory-100/80" />
-              <span className="text-xs text-ivory-100/50">exploring HoABL land right now</span>
+              <span className="text-xs text-ivory-100/50">exploring Aero Estate right now</span>
             </div>
             <Button variant="gold" size="lg" className="w-full" onClick={handleStart}>
               Start with Aira &rarr;

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Compass, Minus, Plus } from "lucide-react";
+import { Compass, MousePointerClick, Minus, Plus } from "lucide-react";
 import { ScreenShell } from "@/components/screen-shell";
 import { ScarcityBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
@@ -120,7 +120,12 @@ export function Screen10PocketMap() {
           ))}
         </div>
 
-        <div className="relative mt-4 shrink-0 overflow-hidden rounded-xl2 border border-forest-900/10 p-3 shadow-card">
+        <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-forest-900/60">
+          <MousePointerClick className="h-3.5 w-3.5 text-gold-500" />
+          Select your pocket &mdash; tap a tile on the map below
+        </div>
+
+        <div className="relative mt-2 shrink-0 overflow-hidden rounded-xl2 border border-forest-900/10 p-3 shadow-card">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={MAP_BACKGROUND_URL} alt="" className="absolute inset-0 h-full w-full object-cover" />
 
