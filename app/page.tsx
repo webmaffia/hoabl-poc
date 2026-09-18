@@ -43,7 +43,7 @@ const SCREEN_COMPONENTS = {
 
 function JourneyScreen() {
   const { currentScreen } = useJourney();
-  const { mode, avatarExpanded } = useVoice();
+  const { mode, avatarExpanded, callActive } = useVoice();
   const Screen = SCREEN_COMPONENTS[currentScreen];
   // Screen 1 already has Aira as a full-width hero (see Screen01Welcome) —
   // the floating draggable widget and mic/chat bar would be redundant
@@ -77,7 +77,7 @@ function JourneyScreen() {
         {showAiraControls && (
           <>
             <AiraCtaBar />
-            <AiraPanel />
+            {!callActive && <AiraPanel />}
           </>
         )}
       </div>

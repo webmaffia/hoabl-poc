@@ -46,6 +46,15 @@ interface VoiceContextValue {
    */
   avatarExpanded: boolean;
   setAvatarExpanded: (expanded: boolean) => void;
+  /**
+   * Whether a screen is presenting Aira as a full-screen "video call" (see
+   * Screen02BuyerProfile's question flow) rather than the small floating
+   * bottom-right widget. Lives here so app/page.tsx can hide that widget
+   * for the duration — otherwise it would float redundantly on top of the
+   * full-screen avatar the screen itself is already showing.
+   */
+  callActive: boolean;
+  setCallActive: (active: boolean) => void;
 }
 
 const VoiceContext = createContext<VoiceContextValue | null>(null);
@@ -74,6 +83,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
   const [micError, setMicError] = useState<string | null>(null);
   const [mode, setMode] = useState<InteractionMode>("talk");
   const [avatarExpanded, setAvatarExpanded] = useState(false);
+  const [callActive, setCallActive] = useState(false);
 
   const recognitionRef = useRef<any>(null);
   const commandsRef = useRef<VoiceCommand[]>([]);
@@ -202,6 +212,8 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
         setMode,
         avatarExpanded,
         setAvatarExpanded,
+        callActive,
+        setCallActive,
       }}
     >
       {children}

@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { ScreenShell } from "@/components/screen-shell";
+import { ArrowRight, Check, ChevronLeft } from "lucide-react";
 import { AiraVisual } from "@/components/aira-visual";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
@@ -114,41 +112,40 @@ const STEPS: Step[] = [
   },
 ];
 
-interface Message {
-  id: string;
-  from: "aira" | "user";
-  text: string;
-}
-
 export function Screen02BuyerProfile() {
-  const { next, dispatch, buyerProfile } = useJourney();
-  const { speak } = useAira();
-  const { supported: voiceSupported } = useVoice();
+  const { next, back, dispatch, buyerProfile } = useJourney();
+  const { speak, status } = useAira();
+  const { supported: voiceSupported, setCallActive } = useVoice();
   const [stepIdx, setStepIdx] = useState(0);
   const [selection, setSelection] = useState<string[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [bubbleText, setBubbleText] = useState("");
   const [typing, setTyping] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [ending, setEnding] = useState(false);
   const initialized = useRef(false);
 
   const step = STEPS[stepIdx];
   const isLast = stepIdx === STEPS.length - 1;
 
+  // This screen presents Aira as a full-screen "video call" for the
+  // duration of the 3 profiling questions — the small floating avatar
+  // widget (see app/page.tsx) is redundant while she already fills the
+  // whole frame, so it's hidden for as long as this screen is active.
+  useEffect(() => {
+    setCallActive(true);
+    return () => setCallActive(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
     const first = STEPS[0];
-    const text = `${first.intro} ${first.question}`;
-    setMessages([{ id: "aira-0", from: "aira", text }]);
+    setBubbleText(`${first.intro} ${first.question}`);
     speak(
       `${first.intro} ${questionWithOptions(first.question, first.options.map((o) => o.label), first.multi)}`
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, typing]);
 
   const toggleOption = (value: string) => {
     if (step.multi) {
@@ -167,9 +164,6 @@ export function Screen02BuyerProfile() {
     const patch = step.apply(buyerProfile, values);
     dispatch({ type: "UPDATE_PROFILE", patch });
     track("profile_question_answered", { question: step.id, answer: values });
-
-    const answerLabels = step.options.filter((o) => values.includes(o.value)).map((o) => o.label).join(", ");
-    setMessages((prev) => [...prev, { id: `user-${stepIdx}`, from: "user", text: answerLabels }]);
     setSelection([]);
 
     if (isLast) {
@@ -177,10 +171,17 @@ export function Screen02BuyerProfile() {
       setTyping(true);
       setTimeout(() => {
         const closing = "Got it. Let me build your land-buying profile.";
-        setMessages((prev) => [...prev, { id: "aira-final", from: "aira", text: closing }]);
+        setBubbleText(closing);
         speak(closing);
         setTyping(false);
-        setTimeout(next, 700);
+        // Give the closing line a beat to land, then dock Aira into the
+        // small bottom-right widget — visible for a moment before the
+        // screen transitions to the next step — before advancing.
+        setTimeout(() => {
+          setEnding(true);
+          setCallActive(false);
+        }, 900);
+        setTimeout(next, 1500);
       }, 700);
       return;
     }
@@ -188,7 +189,7 @@ export function Screen02BuyerProfile() {
     setTyping(true);
     setTimeout(() => {
       const nextStep = STEPS[stepIdx + 1];
-      setMessages((prev) => [...prev, { id: `aira-${stepIdx + 1}`, from: "aira", text: nextStep.question }]);
+      setBubbleText(nextStep.question);
       speak(questionWithOptions(nextStep.question, nextStep.options.map((o) => o.label), nextStep.multi));
       setTyping(false);
       setStepIdx((i) => i + 1);
@@ -220,7 +221,7 @@ export function Screen02BuyerProfile() {
   };
 
   useVoiceCommands(
-    typing
+    typing || ending
       ? []
       : step.multi
       ? [
@@ -242,123 +243,134 @@ export function Screen02BuyerProfile() {
       : step.options.map((o) => ({ labels: [o.label], action: () => selectOptionByVoice(o.value) }))
   );
 
-  const progressPct = ((stepIdx + 1) / STEPS.length) * 100;
-
   return (
-    <ScreenShell showStages={false} title="Your buyer profile">
-      <div className="flex h-full flex-col px-5 pb-5 pt-4">
-        <div className="mb-3 flex items-center gap-3 rounded-2xl border border-gold-400/20 bg-white/70 px-3.5 py-2.5 shadow-card backdrop-blur">
-          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-gold-400/60">
-            <AiraVisual className="h-full w-full object-cover" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[13px] font-semibold text-forest-900">Building your profile</span>
-              <span className="shrink-0 text-[11px] font-semibold text-gold-600">
-                {stepIdx + 1}/{STEPS.length}
-              </span>
-            </div>
-            <Progress value={progressPct} className="mt-1.5" />
-          </div>
-        </div>
-
-        <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar pb-2">
-          <AnimatePresence initial={false}>
-            {messages.map((m) => (
-              <motion.div
-                key={m.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={cn("flex", m.from === "user" ? "justify-end" : "justify-start")}
-              >
-                <div
-                  className={cn(
-                    "max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-snug shadow-card",
-                    m.from === "user"
-                      ? "rounded-br-sm bg-gradient-to-br from-forest-700 to-forest-800 text-ivory-100"
-                      : "rounded-bl-sm border border-gold-400/15 bg-white text-forest-900"
-                  )}
-                >
-                  {m.text}
-                </div>
-              </motion.div>
-            ))}
-            {typing && (
-              <motion.div key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end justify-start gap-2">
-                <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full border border-gold-400/50">
-                  <AiraVisual className="h-full w-full object-cover" />
-                </div>
-                <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-gold-400/15 bg-white px-3.5 py-3 shadow-card">
-                  {[0, 1, 2].map((i) => (
-                    <motion.span
-                      key={i}
-                      className="h-1.5 w-1.5 rounded-full bg-forest-900/40"
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div ref={bottomRef} />
-        </div>
-
-        {!typing && (
+    <div className="relative h-full w-full overflow-hidden bg-forest-950">
+      {/* Full-screen "video call" presentation — Aira fills the whole frame
+          while she asks her 3 profiling questions, matching a real video
+          call rather than a small avatar tucked into a chat header. */}
+      <AnimatePresence>
+        {!ending && (
           <motion.div
-            key={step.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-2.5 pt-1"
+            key="call"
+            initial={false}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{ duration: 0.35, ease: "easeIn" }}
+            className="absolute inset-0"
           >
-            <div className="grid grid-cols-2 gap-2.5">
-              {step.options.map((opt) => {
-                const selected = selection.includes(opt.value);
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => toggleOption(opt.value)}
+            <AiraVisual className="absolute inset-0 h-full w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-forest-950/80 via-transparent to-forest-950/85" />
+
+            {/* Top bar */}
+            <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
+              <button
+                type="button"
+                onClick={back}
+                aria-label="Back"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-950/50 text-ivory-100 backdrop-blur"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <div className="text-center">
+                <div className="text-[15px] font-semibold text-ivory-50">Aira</div>
+                <div className="flex items-center justify-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-ivory-100/70">
+                  <span
                     className={cn(
-                      "relative flex min-h-[52px] items-center rounded-2xl border-2 px-3.5 py-2.5 text-left text-[13.5px] font-medium leading-snug transition-all",
-                      selected
-                        ? "border-gold-500 bg-gold-500/10 text-forest-900 shadow-card"
-                        : "border-forest-900/10 bg-white text-forest-900 hover:border-gold-400/40 hover:shadow-card"
+                      "h-1.5 w-1.5 rounded-full",
+                      status === "live" ? "bg-emerald-400" : status === "connecting" ? "animate-pulse bg-gold-400" : "bg-ivory-100/40"
                     )}
-                  >
-                    <span className="pr-5">{opt.label}</span>
-                    <span
-                      className={cn(
-                        "absolute right-2.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full border transition-colors",
-                        selected ? "border-gold-500 bg-gold-500 text-white" : "border-forest-900/20 bg-white"
-                      )}
-                    >
-                      {selected && <Check className="h-2.5 w-2.5" />}
-                    </span>
-                  </button>
-                );
-              })}
+                  />
+                  {status === "live" ? "Live" : status === "connecting" ? "Connecting…" : "AI Land Advisor"}
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-forest-950/50 px-2.5 py-1.5 text-[11px] font-semibold text-gold-300 backdrop-blur">
+                {stepIdx + 1}/{STEPS.length}
+              </div>
             </div>
-            {voiceSupported && (
-              <p className="text-center text-[11px] text-forest-900/35">
-                Or tap &ldquo;Talk to Aira&rdquo; below and just say your answer
-              </p>
-            )}
-            {step.multi && (
-              <p className="text-xs text-forest-900/40">
-                {selection.length}/{step.maxSelect} selected
-              </p>
-            )}
-            <button
-              onClick={handleContinue}
-              disabled={selection.length === 0}
-              className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-600 py-3.5 text-[15px] font-semibold text-forest-950 shadow-elevated transition-opacity disabled:opacity-40"
-            >
-              {isLast ? "Build my profile" : "Send"}
-              <ArrowRight className="h-4 w-4" />
-            </button>
+
+            {/* Bottom question + options overlay */}
+            <div className="absolute inset-x-0 bottom-24 flex flex-col gap-3 px-4">
+              <AnimatePresence mode="wait">
+                {typing ? (
+                  <motion.div
+                    key="typing"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm bg-forest-950/70 px-4 py-3.5 backdrop-blur"
+                  >
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="h-1.5 w-1.5 rounded-full bg-ivory-100/70"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
+                      />
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={bubbleText}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="max-w-[88%] rounded-2xl rounded-bl-sm bg-forest-950/70 px-4 py-3 text-[14px] leading-snug text-ivory-50 shadow-elevated backdrop-blur"
+                  >
+                    {bubbleText}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {!typing && (
+                <motion.div
+                  key={step.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-2.5"
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {step.options.map((opt) => {
+                      const selected = selection.includes(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => toggleOption(opt.value)}
+                          className={cn(
+                            "relative flex items-center gap-1.5 rounded-full border px-4 py-2.5 text-[13.5px] font-medium leading-snug backdrop-blur transition-all",
+                            selected
+                              ? "border-gold-400 bg-gold-500/90 text-forest-950 shadow-elevated"
+                              : "border-ivory-100/25 bg-forest-950/50 text-ivory-50 hover:border-gold-400/50"
+                          )}
+                        >
+                          {selected && <Check className="h-3 w-3" />}
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {voiceSupported && (
+                    <p className="text-[11px] text-ivory-100/60">
+                      Or tap &ldquo;Talk to Aira&rdquo; below and just say your answer
+                    </p>
+                  )}
+                  {step.multi && (
+                    <p className="text-xs text-ivory-100/50">
+                      {selection.length}/{step.maxSelect} selected
+                    </p>
+                  )}
+                  <button
+                    onClick={handleContinue}
+                    disabled={selection.length === 0}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-600 py-3.5 text-[15px] font-semibold text-forest-950 shadow-elevated transition-opacity disabled:opacity-40"
+                  >
+                    {isLast ? "Build my profile" : "Continue"}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </motion.div>
+              )}
+            </div>
           </motion.div>
         )}
-      </div>
-    </ScreenShell>
+      </AnimatePresence>
+    </div>
   );
 }
