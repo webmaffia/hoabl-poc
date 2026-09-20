@@ -7,7 +7,6 @@ import { AiraVisual } from "@/components/aira-visual";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoice, useVoiceCommands } from "@/lib/voice-command-context";
-import { questionWithOptions } from "@/lib/speech";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { BuyerProfile } from "@/lib/types";
@@ -141,9 +140,10 @@ export function Screen02BuyerProfile() {
     initialized.current = true;
     const first = STEPS[0];
     setBubbleText(`${first.intro} ${first.question}`);
-    speak(
-      `${first.intro} ${questionWithOptions(first.question, first.options.map((o) => o.label), first.multi)}`
-    );
+    // Aira speaks just the question here — the options are already visible
+    // as tappable chips right below, so reading them aloud too is redundant
+    // and makes her opening line drag on.
+    speak(`${first.intro} ${first.question}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -190,7 +190,7 @@ export function Screen02BuyerProfile() {
     setTimeout(() => {
       const nextStep = STEPS[stepIdx + 1];
       setBubbleText(nextStep.question);
-      speak(questionWithOptions(nextStep.question, nextStep.options.map((o) => o.label), nextStep.multi));
+      speak(nextStep.question);
       setTyping(false);
       setStepIdx((i) => i + 1);
     }, 650);

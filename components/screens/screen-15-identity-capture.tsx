@@ -54,8 +54,18 @@ export function Screen15IdentityCapture() {
     if (!mobileValid || !nameValid) return;
     track("identity_otp_sent");
     setOtpSent(true);
-    speak(`I've sent a code to +91 ${mobile}. It's a demo, so ${DEMO_OTP} will work.`);
-    setTimeout(() => otpRefs.current[0]?.focus(), 250);
+    speak("Sending your verification code now — it'll auto-fill in just a second, no need to type anything.");
+    // Simulate the code arriving and auto-filling, digit by digit, the way a
+    // real SMS auto-read would — rather than making the buyer type it in.
+    DEMO_OTP.split("").forEach((digit, i) => {
+      setTimeout(() => {
+        setOtp((prev) => {
+          const next = [...prev];
+          next[i] = digit;
+          return next;
+        });
+      }, 700 + i * 140);
+    });
   };
 
   const handleMobileChange = (value: string) => {
@@ -208,7 +218,9 @@ export function Screen15IdentityCapture() {
                       />
                     ))}
                   </div>
-                  <p className="mt-2 text-xs text-forest-900/40">Demo code: {DEMO_OTP}</p>
+                  <p className="mt-2 text-xs text-forest-900/40">
+                    {otpComplete ? "Verified automatically." : "Auto-verifying via SMS…"}
+                  </p>
                 </div>
               </motion.div>
             )}

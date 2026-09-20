@@ -1,4 +1,5 @@
 import { BuyerProfile, Pocket, PocketPreferenceTag } from "./types";
+import { listToSpeech } from "./speech";
 
 /**
  * Deterministic "profile suitability" scoring.
@@ -76,4 +77,43 @@ export function suitabilityTier(score: number): "Recommended" | "Good fit" | "Al
   if (score >= 80) return "Recommended";
   if (score >= 60) return "Good fit";
   return "Alternative";
+}
+
+const PREFERENCE_LABELS: Record<PocketPreferenceTag, string> = {
+  road_access: "road access",
+  corner_plot: "having a corner plot",
+  larger_plot: "plot size",
+  near_amenity: "amenity proximity",
+  better_view: "the view",
+  more_privacy: "privacy",
+  investment_potential: "investment potential",
+  lower_entry_price: "the lowest entry price",
+};
+
+/**
+ * Turns a pocket's score into a plain-language reason it was suggested —
+ * tying the recommendation back to the buyer's own budget and stated
+ * preferences, rather than presenting the ranking as an unexplained number.
+ */
+export function explainPocketMatch(pocket: Pocket, profile: BuyerProfile, preferences: PocketPreferenceTag[]): string {
+  const reasons: string[] = [];
+
+  if (profile.budgetMin != null && profile.budgetMax != null && pocket.price >= profile.budgetMin && pocket.price <= profile.budgetMax) {
+    reasons.push(`sits right inside your ${profile.budgetLabel ? profile.budgetLabel.toLowerCase() : "stated"} budget`);
+  }
+
+  const strongTags = preferences
+    .map((tag) => ({ tag, contribution: preferenceContribution(pocket, tag) }))
+    .filter((r) => r.contribution >= PREFERENCE_WEIGHT * 0.55)
+    .sort((a, b) => b.contribution - a.contribution)
+    .slice(0, 2)
+    .map((r) => PREFERENCE_LABELS[r.tag]);
+
+  if (strongTags.length) {
+    reasons.push(`leads on ${listToSpeech(strongTags)} — exactly what you told me mattered most`);
+  }
+
+  if (!reasons.length) reasons.push("gives the best all-round balance for your profile");
+
+  return reasons.join(" and ");
 }

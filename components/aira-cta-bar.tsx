@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mic, MessageCircle, VolumeX } from "lucide-react";
+import { Mic, MessageCircle, StopCircle, Volume2, VolumeX } from "lucide-react";
 import { useVoice } from "@/lib/voice-command-context";
 import { useAira } from "@/lib/aira-context";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
  */
 export function AiraCtaBar() {
   const { supported, listening, mode, setMode, toggleListening, micError } = useVoice();
-  const { isSpeaking, stopSpeaking } = useAira();
+  const { isSpeaking, stopSpeaking, muted, toggleMute } = useAira();
 
   const handleMicTap = () => {
     if (mode !== "talk") setMode("talk");
@@ -33,6 +33,18 @@ export function AiraCtaBar() {
         </span>
       )}
       <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-forest-950/90 p-1 shadow-elevated backdrop-blur">
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute Aira" : "Mute Aira"}
+          aria-pressed={muted}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium transition-colors",
+            muted ? "bg-red-500/90 text-white" : "bg-forest-800 text-ivory-100 hover:bg-forest-700"
+          )}
+        >
+          {muted ? <VolumeX className="h-4 w-4 shrink-0" /> : <Volume2 className="h-4 w-4 shrink-0" />}
+        </button>
         {isSpeaking && (
           <button
             type="button"
@@ -40,7 +52,7 @@ export function AiraCtaBar() {
             aria-label="Stop Aira talking"
             className="flex items-center gap-1.5 rounded-full bg-forest-800 px-3 py-2 text-[13px] font-medium text-ivory-100 hover:bg-forest-700"
           >
-            <VolumeX className="h-4 w-4 shrink-0" />
+            <StopCircle className="h-4 w-4 shrink-0" />
           </button>
         )}
         {supported && (

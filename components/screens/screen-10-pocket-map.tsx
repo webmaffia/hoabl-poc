@@ -8,7 +8,7 @@ import { ScarcityBadge } from "@/components/urgency-badge";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
-import { rankPockets, suitabilityTier } from "@/lib/recommendation";
+import { rankPockets, suitabilityTier, explainPocketMatch } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn, formatLakh } from "@/lib/utils";
 
@@ -52,10 +52,10 @@ export function Screen10PocketMap() {
   );
 
   useEffect(() => {
-    const top = ranked[0]?.pocket;
+    const top = ranked[0];
     speak(
       top
-        ? `Based on your preferences, ${top.name} and a couple of others look like strong matches. Tap any pocket to see the details.`
+        ? `I'm suggesting ${top.pocket.name} first because it ${explainPocketMatch(top.pocket, buyerProfile, pocketPreferences)}. Tap it, or any tile, to see the full details.`
         : "Here's the full map — tap any pocket to see the details."
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

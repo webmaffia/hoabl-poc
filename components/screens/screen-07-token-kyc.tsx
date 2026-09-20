@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ShieldCheck, CreditCard, Landmark, Smartphone, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useJourney } from "@/lib/journey-context";
 import { useAira } from "@/lib/aira-context";
 import { useVoiceCommands } from "@/lib/voice-command-context";
+import { getPocketById } from "@/lib/data";
+import { rankPockets } from "@/lib/recommendation";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -57,12 +59,20 @@ const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 const AADHAAR_REGEX = /^\d{4}\s?\d{4}\s?\d{4}$/;
 
 export function Screen07TokenKyc() {
-  const { next, dispatch } = useJourney();
+  const { next, dispatch, activePocketId, selectedProject, projectPockets, buyerProfile, pocketPreferences } = useJourney();
   const { speak } = useAira();
   const [step, setStep] = useState<"overview" | "kyc" | "payment">("overview");
 
+  const ranked = useMemo(
+    () => rankPockets(projectPockets, buyerProfile, pocketPreferences),
+    [projectPockets, buyerProfile, pocketPreferences]
+  );
+  const pocket = getPocketById(activePocketId || "") || ranked[0]?.pocket || projectPockets[0];
+
   useEffect(() => {
-    speak("This is a fully refundable token — it secures the pocket you've chosen. I'll walk you through KYC.");
+    speak(
+      `This fully refundable token locks in ${pocket.name} at ${selectedProject.name} for you, at today's price, while I walk you through a quick KYC — nobody else can book it out from under you in the meantime.`
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Pre-filled with valid dummy data so the demo flow doesn't require typing
@@ -99,7 +109,7 @@ export function Screen07TokenKyc() {
     track("token_cta_clicked");
     track("kyc_started");
     setStep("kyc");
-    speak("Let's get your KYC done. I'll need your name, PAN, Aadhaar, mobile, email, and a quick selfie check — nothing is stored or sent anywhere in this demo.");
+    speak("Let's get your KYC out of the way quickly — name, PAN, Aadhaar, mobile, email, and a quick selfie check. It's a fast, standard verification, and nothing here is stored or sent anywhere in this demo.");
   };
 
   const submitKyc = () => {
@@ -107,7 +117,7 @@ export function Screen07TokenKyc() {
     if (!kycValid) return;
     track("kyc_completed");
     setStep("payment");
-    speak("KYC looks good. Now choose how you'd like to pay the ₹45,000 refundable token — UPI, net banking, or card.");
+    speak(`KYC verified. All that's left is the ₹45,000 refundable token to lock in ${pocket.name} — pick whichever's fastest for you: UPI, net banking, or card.`);
   };
 
   const pay = () => {

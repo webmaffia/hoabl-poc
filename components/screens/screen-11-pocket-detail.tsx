@@ -86,6 +86,19 @@ export function Screen11PocketDetail() {
             <ScarcityBadge pocket={pocket} />
             {pocket.availability !== "sold" && <LiveViewerBadge seed={pocket.id} />}
           </div>
+
+          {pocket.strengths.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {pocket.strengths.slice(0, 3).map((s) => (
+                <span
+                  key={s}
+                  className="flex items-center gap-1 rounded-full bg-gold-500/15 px-2.5 py-1 text-[11px] font-semibold text-gold-700"
+                >
+                  <Sparkles className="h-3 w-3" /> {s}
+                </span>
+              ))}
+            </div>
+          )}
         </motion.div>
 
         <FeatureRow pocket={pocket} />

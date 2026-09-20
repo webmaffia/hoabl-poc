@@ -49,18 +49,21 @@ function JourneyScreen() {
   // the floating draggable widget and mic/chat bar would be redundant
   // clutter over it, so they only appear from screen 2 onward.
   const showAiraControls = currentScreen !== "welcome";
-  // "talk" (Aira full-screen) is the default everywhere Aira controls show;
-  // chat and the expanded avatar both use the same 50/50 bottom-half split,
-  // entered only when the user explicitly opts in (typing, or tapping to
-  // expand the avatar / starting to talk).
-  const splitBottom = !showAiraControls ? null : mode === "chat" ? "chat" : avatarExpanded ? "avatar" : null;
+  // "talk" (Aira full-screen) is the default everywhere Aira controls show.
+  // Both chat and the expanded avatar (tapping the small floating widget)
+  // take over the whole frame — the same full-screen "video call"
+  // presentation as the opening profiling questions (see
+  // Screen02BuyerProfile) — since both are meant to feel like talking to
+  // Aira directly, not a small dock tacked onto the current screen.
+  const chatFullScreen = showAiraControls && mode === "chat";
+  const avatarFullScreen = showAiraControls && mode !== "chat" && avatarExpanded;
   // Pocket detail is presented as a full-screen popup (slide up, closed with
   // an explicit X) rather than the usual left/right screen-to-screen slide.
   const isPopup = currentScreen === "pocket-detail";
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className={cn("relative w-full overflow-hidden transition-[height] duration-300", splitBottom ? "h-1/2" : "h-full")}>
+    <div className="relative flex h-full w-full flex-col">
+      <div className="relative h-full w-full overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentScreen}
@@ -82,9 +85,15 @@ function JourneyScreen() {
         )}
       </div>
 
-      {splitBottom && (
-        <div className="h-1/2 w-full">
-          {splitBottom === "chat" ? <AiraChatDock /> : <AiraExpandedPanel />}
+      {avatarFullScreen && (
+        <div className="absolute inset-0 z-40">
+          <AiraExpandedPanel />
+        </div>
+      )}
+
+      {chatFullScreen && (
+        <div className="absolute inset-0 z-40">
+          <AiraChatDock />
         </div>
       )}
     </div>

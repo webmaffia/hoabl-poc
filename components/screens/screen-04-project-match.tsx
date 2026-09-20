@@ -11,6 +11,8 @@ import { useVoiceCommands } from "@/lib/voice-command-context";
 import { track } from "@/lib/analytics";
 import { PROJECT, PROJECTS } from "@/lib/data";
 import { topProjectMatch } from "@/lib/project-match";
+import { listToSpeech } from "@/lib/speech";
+import { Project } from "@/lib/types";
 
 // The full "why this fits you" breakdown now lives entirely in the
 // walkthrough that follows this screen — repeating it here (as we used to,
@@ -19,6 +21,18 @@ import { topProjectMatch } from "@/lib/project-match";
 // out to switch, then move on.
 const FIT_SUMMARY = "Budget, horizon, location and plot preferences all line up with what you told Aira.";
 
+// A confident, specific pitch for the actual project on screen — not a
+// generic "great choice" line — so Aira sounds like she's genuinely
+// advocating for it, using its real tagline and verified facts.
+function projectPitch(project: Project, isRecommended: boolean): string {
+  const facts = project.verified.slice(0, 2).map((f) => f.value);
+  const factLine = facts.length ? ` It's backed by real numbers — ${listToSpeech(facts)}.` : "";
+  const opener = isRecommended
+    ? `Based on everything you told me, ${project.name} is the strongest match I found for your profile.`
+    : `Great pick — let's talk about ${project.name}.`;
+  return `${opener} ${project.tagline}.${factLine} Honestly, this is exactly the kind of opportunity in ${project.location} that fits what you're looking for, and land like this doesn't stay on the table for long. I'd genuinely encourage you to take a closer look.`;
+}
+
 export function Screen04ProjectMatch() {
   const { next, selectedProject, selectProject, buyerProfile } = useJourney();
   const { speak } = useAira();
@@ -26,11 +40,7 @@ export function Screen04ProjectMatch() {
   const isRecommended = selectedProject.id === match.project.id;
 
   useEffect(() => {
-    speak(
-      isRecommended
-        ? `Based on everything you told me, ${selectedProject.name} is the strongest match I found for your profile.`
-        : `Here's ${selectedProject.name} — the project you picked.`
-    );
+    speak(projectPitch(selectedProject, isRecommended));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProject.id]);
 

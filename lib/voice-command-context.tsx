@@ -1,6 +1,9 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useAira } from "./aira-context";
+import { useJourney } from "./journey-context";
+import { answerQuestion, QaContext } from "./aira-qa";
 
 export interface VoiceCommand {
   /** One or more phrases that should trigger this command (e.g. an option's label plus synonyms). */
@@ -88,6 +91,30 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
   const recognitionRef = useRef<any>(null);
   const commandsRef = useRef<VoiceCommand[]>([]);
 
+  // "Latest ref" pattern: handleTranscript below is a stable useCallback with
+  // no dependencies (recreating it would tear down and rebuild the
+  // SpeechRecognition instance — see its effect). These refs let it always
+  // read the current speak() and journey context without needing to be
+  // recreated whenever the buyer's profile, project or pocket changes.
+  const { speak } = useAira();
+  const journey = useJourney();
+  const speakRef = useRef(speak);
+  speakRef.current = speak;
+  const qaContextRef = useRef<QaContext>({
+    buyerProfile: journey.buyerProfile,
+    selectedProject: journey.selectedProject,
+    projectPockets: journey.projectPockets,
+    pocketPreferences: journey.pocketPreferences,
+    activePocketId: journey.activePocketId,
+  });
+  qaContextRef.current = {
+    buyerProfile: journey.buyerProfile,
+    selectedProject: journey.selectedProject,
+    projectPockets: journey.projectPockets,
+    pocketPreferences: journey.pocketPreferences,
+    activePocketId: journey.activePocketId,
+  };
+
   const registerCommands = useCallback((commands: VoiceCommand[]) => {
     commandsRef.current = commands;
     return () => {
@@ -118,7 +145,15 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
         }
       }
     }
-    if (best) best.action(text);
+    if (best) {
+      best.action(text);
+      return;
+    }
+
+    // Nothing on the current screen recognizes this as a command — treat it
+    // as an actual question instead of staying silent, and answer it using
+    // the buyer's live context (budget, selected project, focused pocket…).
+    speakRef.current(answerQuestion(text, qaContextRef.current));
   }, []);
 
   useEffect(() => {

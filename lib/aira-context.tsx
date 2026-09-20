@@ -18,6 +18,11 @@ interface AiraContextValue {
    * line needs to start immediately (so she never lags behind the screen
    * the user has already moved on to) and by an explicit "stop" control. */
   stopSpeaking: () => void;
+  /** Whether the user has explicitly muted Aira's audio. Independent of
+   * whether she's actually speaking — captions and lip-sync keep working
+   * while muted, only the sound is silenced. */
+  muted: boolean;
+  toggleMute: () => void;
 }
 
 const AiraContext = createContext<AiraContextValue | null>(null);
@@ -31,12 +36,14 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AiraStatus>("connecting");
   const [caption, setCaption] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [muted, setMuted] = useState(false);
 
   const sessionRef = useRef<any>(null);
   const startedRef = useRef(false);
   const speakTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const elementsRef = useRef<Set<HTMLVideoElement>>(new Set());
   const gestureOccurredRef = useRef(false);
+  const mutedRef = useRef(false);
   // The most recent speak() text that arrived while the session was still
   // "connecting" (not yet "live") — HeyGen's session.repeat() was never
   // actually called for it, so it must be replayed once the session goes
@@ -67,7 +74,7 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
     function unlockAudio() {
       gestureOccurredRef.current = true;
       elementsRef.current.forEach((el) => {
-        el.muted = false;
+        el.muted = mutedRef.current;
         el.play().catch(() => {});
       });
     }
@@ -142,7 +149,7 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
   const attachVideo = useCallback((el: HTMLVideoElement | null) => {
     if (!el) return;
     elementsRef.current.add(el);
-    if (gestureOccurredRef.current) el.muted = false;
+    if (gestureOccurredRef.current) el.muted = mutedRef.current;
     if (sessionRef.current) {
       try {
         sessionRef.current.attach(el);
@@ -154,6 +161,23 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
 
   const detachVideo = useCallback((el: HTMLVideoElement | null) => {
     if (el) elementsRef.current.delete(el);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      mutedRef.current = next;
+      // Only apply to elements once a gesture has unlocked audio — before
+      // that they're already muted for autoplay-policy reasons, and forcing
+      // muted=false here (on an unmute tap that IS itself the gesture) is
+      // handled by the pointerdown/keydown listener firing first.
+      if (gestureOccurredRef.current) {
+        elementsRef.current.forEach((el) => {
+          el.muted = next;
+        });
+      }
+      return next;
+    });
   }, []);
 
   const stopSpeaking = useCallback(() => {
@@ -207,7 +231,9 @@ export function AiraProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AiraContext.Provider value={{ status, caption, isSpeaking, attachVideo, detachVideo, speak, stopSpeaking }}>
+    <AiraContext.Provider
+      value={{ status, caption, isSpeaking, attachVideo, detachVideo, speak, stopSpeaking, muted, toggleMute }}
+    >
       {children}
     </AiraContext.Provider>
   );

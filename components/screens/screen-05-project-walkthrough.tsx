@@ -37,6 +37,10 @@ interface Section {
   id: string;
   label: string;
   caption: string;
+  /** What Aira actually says for this tab — written to explain and
+   * contextualize the facts below it, not to read the on-screen caption
+   * back verbatim. */
+  speech: string;
   icon: React.ElementType;
   accent: Accent;
   verified: { label: string; value: string }[];
@@ -72,6 +76,9 @@ function buildSections(project: Project): Section[] {
       icon: MapPin,
       accent: "forest",
       caption: "Your priority was accessibility, so let's start with how the project connects to the surrounding area.",
+      speech: isFeatured
+        ? `Let's start with location, since that's what usually matters most. ${project.name} sits in ${project.location}, roughly 40 minutes from Navi Mumbai International Airport and almost exactly between Mumbai and Pune — that in-between position is a big part of why buyers are drawn to it.`
+        : `${project.name} is located in ${project.location}. I'll flag the exact route and drive time as something to confirm with your advisor, since it isn't published yet.`,
       verified: [
         { label: "Location", value: project.location },
         ...(isFeatured
@@ -89,6 +96,9 @@ function buildSections(project: Project): Section[] {
       icon: Signpost,
       accent: "gold",
       caption: "Here's how the project links to the wider region today.",
+      speech: isFeatured
+        ? "Beyond location, connectivity here is already real, not just planned — the airport is operational today, and Colliers ranks this region the number one micro-market of eight nationally. That's the kind of connectivity that tends to hold its value over time."
+        : "Detailed connectivity specifics for this project are still being confirmed — I'll make sure that's one of the first things your advisor walks you through.",
       verified: isFeatured
         ? [
             { label: "Airport", value: "Navi Mumbai International Airport — operational" },
@@ -103,6 +113,9 @@ function buildSections(project: Project): Section[] {
       icon: Building2,
       accent: "forest",
       caption: "This is the broader vision the developer has shared for the region.",
+      speech: isFeatured
+        ? "Now, development — there's about ₹3 lakh crore of committed capital going into this region, and the project itself is developed by House of Abhinandan Lodha Estate Holdings. That's a serious scale of backing behind the master plan."
+        : "This project is developed by House of Abhinandan Lodha Estate Holdings — I'd suggest asking your advisor for the specific phase-wise handover plan.",
       verified: [
         ...(isFeatured ? [{ label: "Committed regional capital", value: "₹3,00,000 crore (as cited by HoABL)" }] : []),
         { label: "Developer", value: "House of Abhinandan Lodha Estate Holdings Pvt Ltd" },
@@ -115,6 +128,7 @@ function buildSections(project: Project): Section[] {
       icon: Sparkles,
       accent: "gold",
       caption: "Since amenities mattered to you, here's what's confirmed so far.",
+      speech: "Since amenities mattered to you, here's what's actually confirmed rather than just promised — I've kept the rest flagged separately so you're never guessing what's verified and what isn't.",
       verified: project.verified,
       confirm: ["Full on-site amenity list", "Maintenance charges post-handover"],
     },
@@ -124,6 +138,7 @@ function buildSections(project: Project): Section[] {
       icon: LayoutGrid,
       accent: "forest",
       caption: "Here's an illustrative pocket layout, to show how plots typically get organized — not this project's actual released plan.",
+      speech: "This layout is illustrative — it's here to show you how plots typically get grouped into pockets, not this project's actual released plan. Once you unlock the real pocket map next, the sizes and pricing you see there are what actually apply.",
       verified: [
         { label: "Pockets shown", value: "8 illustrative pockets (demo layout)" },
         { label: "Plot sizes shown", value: "1,500 – 2,100 sq.ft. (demo layout)" },
@@ -136,6 +151,7 @@ function buildSections(project: Project): Section[] {
       icon: PuzzleIcon,
       accent: "gold",
       caption: "Each pocket balances access, privacy, view and price differently — there's no single 'best' pocket, only the best fit for you.",
+      speech: "Here's how I'll help you choose a pocket: every one of them trades off road access, privacy, amenity proximity, view, and price differently. There's no single 'best' pocket — only the one that best matches what you actually care about, and that's exactly what I'll walk you through next.",
       verified: [{ label: "Pocket criteria", value: "Road access, privacy, amenity proximity, view, price" }],
       confirm: ["Final pocket-wise release schedule"],
     },
@@ -145,6 +161,7 @@ function buildSections(project: Project): Section[] {
       icon: ShieldCheck,
       accent: "forest",
       caption: "A few things worth knowing before you go further.",
+      speech: "One last thing before you move on: you can browse and shortlist as many pockets as you like, completely free. The refundable token and KYC only come in once you've actually chosen the one you want.",
       verified: [
         { label: "Booking process", value: "Browse and shortlist freely — refundable token + KYC once you've chosen a pocket" },
       ],
@@ -163,7 +180,7 @@ export function Screen05ProjectWalkthrough() {
   const accent = ACCENT_CLASSES[section.accent];
 
   useEffect(() => {
-    speak(section.caption);
+    speak(section.speech);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section.id]);
 
