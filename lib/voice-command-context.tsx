@@ -66,6 +66,19 @@ function normalize(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
 }
 
+// Two words "match" if they're identical, or one is a reasonably long prefix
+// of the other — e.g. "invest"/"investment" or "personal"/"personally". This
+// is what lets natural spoken answers ("I want to invest in it") match an
+// option label ("Investment") even though the exact word form differs;
+// plain equality alone missed most conjugations, which was the app's main
+// voice-matching gap on free-form answers (like the buyer-profile screen's
+// 3 opening questions).
+function wordsMatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (a.length < 4 || b.length < 4) return false;
+  return a.startsWith(b) || b.startsWith(a);
+}
+
 /** Score how well a spoken phrase matches a command label: substring match beats partial word overlap. */
 function matchScore(heard: string, label: string): number {
   const h = normalize(heard);
@@ -73,9 +86,9 @@ function matchScore(heard: string, label: string): number {
   if (!h || !l) return 0;
   if (h === l) return 1000;
   if (h.includes(l) || l.includes(h)) return 100 + l.length;
-  const hWords = new Set(h.split(/\s+/));
+  const hWords = Array.from(new Set(h.split(/\s+/)));
   const lWords = l.split(/\s+/);
-  const overlap = lWords.filter((w) => hWords.has(w)).length;
+  const overlap = lWords.filter((w) => hWords.some((hw) => wordsMatch(hw, w))).length;
   return overlap / lWords.length >= 0.6 ? overlap : 0;
 }
 
