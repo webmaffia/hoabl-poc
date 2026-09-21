@@ -123,13 +123,24 @@ export function Screen02BuyerProfile() {
   const { supported: voiceSupported, setCallActive } = useVoice();
   const [stepIdx, setStepIdx] = useState(0);
   const [selection, setSelection] = useState<string[]>([]);
-  const [bubbleText, setBubbleText] = useState("");
+  // The closing line shown just before this screen hands off to the next
+  // one — not one of STEPS, so it can't be derived from stepIdx the way the
+  // question bubble below is.
+  const [closingText, setClosingText] = useState<string | null>(null);
   const [typing, setTyping] = useState(false);
   const [ending, setEnding] = useState(false);
   const initialized = useRef(false);
 
   const step = STEPS[stepIdx];
   const isLast = stepIdx === STEPS.length - 1;
+  // Derived directly from stepIdx (the same state that drives which options
+  // are shown below) rather than tracked as separate state — the two used
+  // to be updated together "by hand" in submitAnswer, and if that ever fell
+  // out of step (e.g. one setState landing without the other), Aira would
+  // audibly move on to the next question while the bubble and options
+  // stayed frozen on the previous one. Deriving it removes that failure
+  // mode entirely: there's only one source of truth now.
+  const bubbleText = closingText ?? (step.intro ? `${step.intro} ${step.question}` : step.question);
 
   // This screen presents Aira as a full-screen "video call" for the
   // duration of the 3 profiling questions — the small floating avatar
@@ -145,7 +156,6 @@ export function Screen02BuyerProfile() {
     if (initialized.current) return;
     initialized.current = true;
     const first = STEPS[0];
-    setBubbleText(`${first.intro} ${first.question}`);
     // Aira speaks just the question here — the options are already visible
     // as tappable chips right below, so reading them aloud too is redundant
     // and makes her opening line drag on.
@@ -177,7 +187,7 @@ export function Screen02BuyerProfile() {
       setTyping(true);
       setTimeout(() => {
         const closing = "Got it. Let me build your land-buying profile.";
-        setBubbleText(closing);
+        setClosingText(closing);
         speak(closing);
         setTyping(false);
         // Give the closing line a beat to land, then dock Aira into the
@@ -195,7 +205,6 @@ export function Screen02BuyerProfile() {
     setTyping(true);
     setTimeout(() => {
       const nextStep = STEPS[stepIdx + 1];
-      setBubbleText(nextStep.question);
       speak(nextStep.question);
       setTyping(false);
       setStepIdx((i) => i + 1);
