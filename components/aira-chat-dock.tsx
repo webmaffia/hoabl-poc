@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Minimize2, Send } from "lucide-react";
 import { useVoice } from "@/lib/voice-command-context";
 import { useAira } from "@/lib/aira-context";
+import { useJourney } from "@/lib/journey-context";
+import { answerQuestion } from "@/lib/aira-qa";
 import { AiraVisual } from "./aira-visual";
 import { cn } from "@/lib/utils";
 
@@ -17,24 +19,27 @@ export interface ChatMsg {
 }
 
 /**
- * Chat mode's presentation: a full-screen takeover (see app/page.tsx), same
- * as the opening profiling questions — not a small dock — since it's opt-in
- * only once the user explicitly switches via the CTA bar's Chat button.
- * Minimizing docks Aira back into the small bottom-right widget rather than
- * just re-showing the previous split, matching how the expanded avatar's own
- * minimize (X) button behaves.
+ * Chat mode's presentation: a full-screen "video call" takeover (see
+ * app/page.tsx) — Aira's live feed fills the whole frame, the same way
+ * Screen02BuyerProfile presents her for the opening profiling questions,
+ * with message bubbles overlaid near the bottom rather than a small video
+ * strip above a plain list.
+ *
+ * Deliberately does NOT listen to the shared aira-context `caption` — that
+ * value also changes from whatever the screen *behind* this overlay happens
+ * to be narrating (its own mount effects, timers, etc.), which isn't a
+ * response to anything the user typed here and made the transcript look
+ * like it was answering a different conversation. Every message shown here
+ * is instead generated directly from what the user actually sent, using the
+ * same context-aware answer engine as voice mode's fallback.
  */
 export function AiraChatDock() {
-  const { mode, setMode, setAvatarExpanded, supported, submitText } = useVoice();
-  const { caption, status } = useAira();
+  const { mode, setMode, setAvatarExpanded, supported } = useVoice();
+  const { status, speak } = useAira();
+  const { buyerProfile, selectedProject, projectPockets, pocketPreferences, activePocketId } = useJourney();
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!caption) return;
-    setMessages((prev) => [...prev, { id: `a-${Date.now()}`, from: "aira", text: caption }]);
-  }, [caption]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -43,10 +48,20 @@ export function AiraChatDock() {
   if (mode !== "chat") return null;
 
   const send = (text: string) => {
-    if (!text.trim()) return;
-    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, from: "user", text: text.trim() }]);
-    submitText(text.trim());
+    const question = text.trim();
+    if (!question) return;
     setDraft("");
+    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, from: "user", text: question }]);
+
+    const answer = answerQuestion(question, {
+      buyerProfile,
+      selectedProject,
+      projectPockets,
+      pocketPreferences,
+      activePocketId,
+    });
+    setMessages((prev) => [...prev, { id: `a-${Date.now()}`, from: "aira", text: answer }]);
+    speak(answer);
   };
 
   // Docks Aira back into the small floating bottom-right widget — same
@@ -59,105 +74,114 @@ export function AiraChatDock() {
 
   return (
     <motion.div
-      initial={{ y: 24, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.25 }}
-      className="relative flex h-full w-full flex-col overflow-hidden border-t border-gold-400/30 bg-forest-950"
+      className="relative h-full w-full overflow-hidden bg-forest-950"
     >
-      {/* Same full-bleed "video call" presentation as the opening profiling
-          questions (see Screen02BuyerProfile) — Aira's live feed fills the
-          backdrop instead of a small circular icon, so chat still feels like
-          talking to her, not a plain text widget. */}
-      <div className="relative h-44 w-full shrink-0 overflow-hidden">
-        <AiraVisual className="absolute inset-0 h-full w-full object-cover" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-forest-950/70 via-forest-950/10 to-forest-950" />
-        <div className="absolute inset-x-3 top-2.5 flex items-center gap-1.5">
-          <span className="flex items-center gap-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> LIVE
-          </span>
-          <span className="text-xs font-semibold text-ivory-50">Aira</span>
-          <span className="text-[10px] text-ivory-100/60">{status === "live" ? "AI Land Advisor" : "Connecting…"}</span>
-          <div className="ml-auto flex items-center gap-1.5">
-            {supported && (
-              <button
-                type="button"
-                onClick={() => setMode("talk")}
-                className="rounded-full bg-forest-950/60 px-2.5 py-1 text-[11px] font-medium text-ivory-100/85 backdrop-blur hover:bg-forest-950/80"
-              >
-                Switch to talk
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={minimize}
-              aria-label="Minimize Aira"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-forest-950/60 text-ivory-100 backdrop-blur hover:bg-forest-950/80"
-            >
-              <Minimize2 className="h-3.5 w-3.5" />
-            </button>
+      <AiraVisual className="absolute inset-0 h-full w-full object-cover" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-forest-950/80 via-transparent to-forest-950/90" />
+
+      {/* Top bar */}
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
+        <span className="flex items-center gap-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> LIVE
+        </span>
+        <div className="text-center">
+          <div className="text-[15px] font-semibold text-ivory-50">Aira</div>
+          <div className="flex items-center justify-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-ivory-100/70">
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                status === "live" ? "bg-emerald-400" : status === "connecting" ? "animate-pulse bg-gold-400" : "bg-ivory-100/40"
+              )}
+            />
+            {status === "live" ? "Live" : status === "connecting" ? "Connecting…" : "AI Land Advisor"}
           </div>
         </div>
-      </div>
-
-      <div ref={listRef} className="no-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3.5 pb-2 pt-3">
-        {messages.length === 0 && (
-          <p className="px-1 text-[12px] leading-snug text-ivory-100/50">
-            Ask me anything — pricing, a specific pocket, KYC, whatever&rsquo;s on your mind.
-          </p>
-        )}
-        <AnimatePresence initial={false}>
-          {messages.map((m) => (
-            <motion.div
-              key={m.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={cn(
-                "max-w-[85%] rounded-2xl px-3.5 py-2 text-[13px] leading-snug shadow-elevated backdrop-blur",
-                m.from === "user"
-                  ? "ml-auto rounded-br-sm bg-gradient-to-r from-gold-500 to-gold-600 text-forest-950"
-                  : "rounded-bl-sm bg-forest-900/70 text-ivory-50"
-              )}
-            >
-              {m.text}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {messages.length === 0 && (
-        <div className="no-scrollbar flex shrink-0 gap-1.5 overflow-x-auto px-3.5 pb-2">
-          {STARTER_PROMPTS.map((p) => (
+        <div className="flex items-center gap-1.5">
+          {supported && (
             <button
-              key={p}
-              onClick={() => send(p)}
-              className="shrink-0 rounded-full border border-ivory-100/15 bg-forest-900/50 px-3 py-1.5 text-[11.5px] font-medium text-ivory-100/85 hover:border-gold-400/50"
+              type="button"
+              onClick={() => setMode("talk")}
+              className="rounded-full bg-forest-950/60 px-2.5 py-1.5 text-[11px] font-medium text-ivory-100/85 backdrop-blur hover:bg-forest-950/80"
             >
-              {p}
+              Switch to talk
             </button>
-          ))}
+          )}
+          <button
+            type="button"
+            onClick={minimize}
+            aria-label="Minimize Aira"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-forest-950/60 text-ivory-100 backdrop-blur hover:bg-forest-950/80"
+          >
+            <Minimize2 className="h-3.5 w-3.5" />
+          </button>
         </div>
-      )}
+      </div>
 
-      <div className="flex shrink-0 items-center gap-2 border-t border-white/10 p-3">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") send(draft);
-          }}
-          placeholder="Ask Aira anything…"
-          style={{ colorScheme: "dark" }}
-          className="min-w-0 flex-1 rounded-full bg-forest-800 px-4 py-2.5 text-base text-ivory-100 outline-none placeholder:text-ivory-100/40 focus:bg-forest-700"
-        />
-        <button
-          type="button"
-          onClick={() => send(draft)}
-          disabled={!draft.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-500 text-forest-950 disabled:opacity-40"
-          aria-label="Send"
-        >
-          <Send className="h-4 w-4" />
-        </button>
+      {/* Bottom overlay: message stack + starter prompts + input, all on top of Aira's live feed rather than below it. */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 px-4 pb-4">
+        <div ref={listRef} className="no-scrollbar max-h-[46vh] space-y-2 overflow-y-auto pb-1">
+          {messages.length === 0 && (
+            <p className="max-w-[85%] rounded-2xl rounded-bl-sm bg-forest-950/70 px-4 py-3 text-[13px] leading-snug text-ivory-100/80 shadow-elevated backdrop-blur">
+              Ask me anything — pricing, a specific pocket, KYC, whatever&rsquo;s on your mind.
+            </p>
+          )}
+          <AnimatePresence initial={false}>
+            {messages.map((m) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn(
+                  "max-w-[85%] rounded-2xl px-4 py-2.5 text-[13.5px] leading-snug shadow-elevated backdrop-blur",
+                  m.from === "user"
+                    ? "ml-auto rounded-br-sm bg-gradient-to-r from-gold-500 to-gold-600 text-forest-950"
+                    : "rounded-bl-sm bg-forest-950/70 text-ivory-50"
+                )}
+              >
+                {m.text}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {messages.length === 0 && (
+          <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
+            {STARTER_PROMPTS.map((p) => (
+              <button
+                key={p}
+                onClick={() => send(p)}
+                className="shrink-0 rounded-full border border-ivory-100/25 bg-forest-950/50 px-3 py-1.5 text-[11.5px] font-medium text-ivory-50 backdrop-blur hover:border-gold-400/50"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") send(draft);
+            }}
+            placeholder="Ask Aira anything…"
+            style={{ colorScheme: "dark" }}
+            className="min-w-0 flex-1 rounded-full border border-ivory-100/15 bg-forest-950/60 px-4 py-2.5 text-base text-ivory-100 outline-none backdrop-blur placeholder:text-ivory-100/40 focus:border-gold-400/50"
+          />
+          <button
+            type="button"
+            onClick={() => send(draft)}
+            disabled={!draft.trim()}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-gold-500 to-gold-600 text-forest-950 shadow-elevated disabled:opacity-40"
+            aria-label="Send"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </motion.div>
   );
