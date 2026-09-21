@@ -67,16 +67,21 @@ export function Screen01Welcome() {
     speak(
       "I'll understand what you're looking for, explore the relevant project with you, and help you evaluate the right pocket."
     );
-    // Ask for mic access up front — by the time the user reaches a screen
-    // with voice commands, the browser prompt is already resolved instead of
-    // interrupting them mid-flow.
-    requestMicPermission();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStart = () => {
     track("sales_call_completed");
     track("aira_started");
+    // Ask for mic access here, inside a real tap — by the time the user
+    // reaches a screen with voice commands, the browser prompt is already
+    // resolved instead of interrupting them mid-flow. This used to fire from
+    // a mount effect instead (no click behind it at all), which mobile
+    // Chrome's permission-abuse heuristics treat as a low-trust request —
+    // it can get silently auto-denied and then keep suppressing even later,
+    // genuinely tap-triggered mic requests for the rest of the session. A
+    // request tied to an actual user gesture doesn't hit that path.
+    requestMicPermission();
     next();
   };
 
