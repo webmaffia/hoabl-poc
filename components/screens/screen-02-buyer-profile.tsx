@@ -14,6 +14,12 @@ import { BuyerProfile } from "@/lib/types";
 interface Option {
   value: string;
   label: string;
+  /** Natural-language ways of expressing this option, beyond the label
+   * itself ("I want to invest", "for resale" -> Investment) — checked
+   * before the generic fuzzy label matcher, so a real spoken sentence
+   * reliably lands on the right option instead of silently matching
+   * nothing and falling through to an unrelated Q&A response. */
+  synonyms?: RegExp;
 }
 
 // Buyers often just say/type a number ("40", "40L", "40 lakh", "1.2 crore")
@@ -69,9 +75,9 @@ const STEPS: Step[] = [
     intro: "Hi! I'm Aira 👋 Let's find the right land for you.",
     question: "What are you mainly buying the land for?",
     options: [
-      { value: "investment", label: "Investment" },
-      { value: "personal", label: "Personal use" },
-      { value: "both", label: "Both" },
+      { value: "investment", label: "Investment", synonyms: /invest|profit|returns?\b|resale|appreciat|rent(al)?( it)? out/ },
+      { value: "personal", label: "Personal use", synonyms: /personal|myself|my (own )?(use|family)|live (there|in it)|self.?use|for (us|my family)/ },
+      { value: "both", label: "Both", synonyms: /\bboth\b|either|mix(ture)? of|combination|some of each/ },
     ],
     apply: (_p, v) => ({ purpose: v[0] as BuyerProfile["purpose"] }),
   },
@@ -99,10 +105,10 @@ const STEPS: Step[] = [
     id: "expected",
     question: "What's the expected purpose of this land?",
     options: [
-      { value: "wealth", label: "Long-term wealth creation" },
-      { value: "income", label: "Future development / income" },
-      { value: "home", label: "Personal use / second home" },
-      { value: "unsure", label: "Not sure yet" },
+      { value: "wealth", label: "Long-term wealth creation", synonyms: /wealth|appreciat|long.?term|grow(th)?|value increas/ },
+      { value: "income", label: "Future development / income", synonyms: /income|rent(al)?|develop|business|build (on|something)/ },
+      { value: "home", label: "Personal use / second home", synonyms: /(second|own|my) home|live (there|in it)|reside|weekend (home|house)/ },
+      { value: "unsure", label: "Not sure yet", synonyms: /not sure|don'?t know|no idea|undecided|haven'?t decided/ },
     ],
     apply: (_p, v) => ({
       expectedPurpose:
@@ -240,7 +246,11 @@ export function Screen02BuyerProfile() {
           },
           ...step.options.map((o) => ({ labels: [o.label], action: () => selectOptionByVoice(o.value) })),
         ]
-      : step.options.map((o) => ({ labels: [o.label], action: () => selectOptionByVoice(o.value) }))
+      : step.options.map((o) => ({
+          labels: [o.label],
+          test: o.synonyms ? (heard: string) => o.synonyms!.test(heard.toLowerCase()) : undefined,
+          action: () => selectOptionByVoice(o.value),
+        }))
   );
 
   return (
