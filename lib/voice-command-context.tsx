@@ -106,6 +106,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
     projectPockets: journey.projectPockets,
     pocketPreferences: journey.pocketPreferences,
     activePocketId: journey.activePocketId,
+    currentScreen: journey.currentScreen,
   });
   qaContextRef.current = {
     buyerProfile: journey.buyerProfile,
@@ -113,6 +114,7 @@ export function VoiceCommandProvider({ children }: { children: React.ReactNode }
     projectPockets: journey.projectPockets,
     pocketPreferences: journey.pocketPreferences,
     activePocketId: journey.activePocketId,
+    currentScreen: journey.currentScreen,
   };
 
   const registerCommands = useCallback((commands: VoiceCommand[]) => {

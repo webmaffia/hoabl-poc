@@ -1,6 +1,7 @@
 import { BuyerProfile, Pocket, PocketPreferenceTag, Project } from "./types";
 import { rankPockets, explainPocketMatch } from "./recommendation";
 import { formatLakh } from "./utils";
+import { ScreenId } from "./journey-context";
 
 /**
  * Everything Aira needs to answer an open-ended question in context, rather
@@ -15,12 +16,44 @@ export interface QaContext {
   projectPockets: Pocket[];
   pocketPreferences: PocketPreferenceTag[];
   activePocketId: string | null;
+  /** Which screen the buyer is actually looking at right now — lets "what is
+   * this screen?" / "what should I do here?" get a real, specific answer
+   * instead of the generic fallback. */
+  currentScreen: ScreenId;
 }
 
 function focusedPocket(ctx: QaContext): Pocket | undefined {
   const active = ctx.projectPockets.find((p) => p.id === ctx.activePocketId);
   if (active) return active;
   return rankPockets(ctx.projectPockets, ctx.buyerProfile, ctx.pocketPreferences)[0]?.pocket;
+}
+
+/** A plain-language explanation of whatever screen the buyer is currently on, using their real project/pocket where relevant. */
+function describeCurrentScreen(ctx: QaContext): string {
+  const pocket = focusedPocket(ctx);
+  const project = ctx.selectedProject.name;
+  const descriptions: Record<ScreenId, string> = {
+    welcome: "This is the welcome screen — a quick intro to how I'll guide you to the right piece of land.",
+    "buyer-profile": "I'm asking you three quick questions here — what you're buying for, your budget, and what you expect from the land — so I can match you to the right project.",
+    "ai-processing": "I'm matching your answers against available projects right now — just a moment.",
+    "select-project": "This is the full list of HoABL projects — the one that fits your profile best is highlighted, but you can browse and pick any of them.",
+    "project-match": `You're looking at ${project} — I've flagged it as your match, or you can switch to a different project from the list below it.`,
+    "project-walkthrough": `This walks you through ${project} tab by tab — location, connectivity, development, amenities, layout, and what's still to confirm with HoABL.`,
+    "pocket-map": "This is the pocket map — tap any tile to see pricing and details for that pocket, or switch to \"My matches\" for the ones that best fit your profile.",
+    "pocket-detail": pocket
+      ? `You're viewing ${pocket.name} — its price, suitability score, strengths, trade-offs, and how it compares to nearby alternatives.`
+      : "You're viewing a pocket's full details — price, suitability score, strengths, trade-offs, and how it compares to alternatives.",
+    "payment-plan": pocket
+      ? `This is the payment plan for ${pocket.name} — choose a plan type and adjust the booking percentage to see the full schedule.`
+      : "This is the payment plan screen — choose a plan type and see the full instalment schedule.",
+    "identity-capture": "This is where I send your plan to you — just your name and mobile, verified with a quick code, so you can pick up where you left off later.",
+    "token-kyc": pocket
+      ? `This is the refundable ₹45,000 token and KYC step for ${pocket.name} — completing it locks the pocket in before your advisor handoff.`
+      : "This is the refundable token and KYC step — completing it locks in your chosen pocket before your advisor handoff.",
+    "access-unlocked": "You're all set — KYC is verified, payment is done, and your pocket is secured.",
+    "advisor-handoff": "This is the final step — connecting you to a human HoABL advisor who already has your full context, so you won't have to repeat anything.",
+  };
+  return descriptions[ctx.currentScreen];
 }
 
 interface Topic {
@@ -31,6 +64,13 @@ interface Topic {
 // Ordered most-specific-first — the first matching topic wins, so a broader
 // pattern (e.g. "pocket") doesn't swallow a more specific one (e.g. "price").
 const TOPICS: Topic[] = [
+  {
+    test: (t) =>
+      /this (screen|page)|where am i|what('?s| is) (this|here)\b|what should i do( here| now)?|explain (this|the) (screen|page)/.test(
+        t
+      ),
+    answer: (ctx) => describeCurrentScreen(ctx),
+  },
   {
     test: (t) => /\brefund|\btoken\b|reserve|hold my|lock in/.test(t),
     answer: () =>

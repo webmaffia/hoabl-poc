@@ -36,7 +36,7 @@ export interface ChatMsg {
 export function AiraChatDock() {
   const { mode, setMode, setAvatarExpanded, supported } = useVoice();
   const { status, speak } = useAira();
-  const { buyerProfile, selectedProject, projectPockets, pocketPreferences, activePocketId } = useJourney();
+  const { buyerProfile, selectedProject, projectPockets, pocketPreferences, activePocketId, currentScreen } = useJourney();
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
@@ -59,6 +59,7 @@ export function AiraChatDock() {
       projectPockets,
       pocketPreferences,
       activePocketId,
+      currentScreen,
     });
     setMessages((prev) => [...prev, { id: `a-${Date.now()}`, from: "aira", text: answer }]);
     speak(answer);

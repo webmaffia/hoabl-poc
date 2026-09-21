@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * screen.
  */
 export function AiraCtaBar() {
-  const { supported, listening, mode, setMode, toggleListening, micError } = useVoice();
+  const { supported, listening, mode, setMode, toggleListening, micError, callActive } = useVoice();
   const { isSpeaking, stopSpeaking, muted, toggleMute } = useAira();
 
   const handleMicTap = () => {
@@ -78,19 +78,25 @@ export function AiraCtaBar() {
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={() => setMode("chat")}
-          aria-label="Chat with Aira instead"
-          aria-pressed={mode === "chat"}
-          className={cn(
-            "flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors",
-            mode === "chat" ? "bg-gold-500 text-forest-950" : "bg-forest-800 text-ivory-100"
-          )}
-        >
-          <MessageCircle className="h-4 w-4 shrink-0" />
-          Chat
-        </button>
+        {/* Screen02BuyerProfile already presents Aira as a full-screen "video
+            call" for its 3 profiling questions, with its own answer-by-voice
+            or tap-a-chip flow — a separate typed chat mode doesn't add
+            anything there and would just be a redundant second way in. */}
+        {!callActive && (
+          <button
+            type="button"
+            onClick={() => setMode("chat")}
+            aria-label="Chat with Aira instead"
+            aria-pressed={mode === "chat"}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors",
+              mode === "chat" ? "bg-gold-500 text-forest-950" : "bg-forest-800 text-ivory-100"
+            )}
+          >
+            <MessageCircle className="h-4 w-4 shrink-0" />
+            Chat
+          </button>
+        )}
       </div>
     </div>
   );
